@@ -133,23 +133,49 @@ export function regressGaussian(numSamples: number, noise: number):
   return points;
 }
 
-export function classifySpiralData(numSamples: number, noise: number):
+export function classifyParityData(numSamples: number, noise: number):
     Example2D[] {
   let points: Example2D[] = [];
-  let n = numSamples / 2;
+  let n = 8;
 
-  function genSpiral(deltaT: number, label: number) {
-    for (let i = 0; i < n; i++) {
-      let r = i / n * 5;
-      let t = 1.75 * i / n * 2 * Math.PI + deltaT;
-      let x = r * Math.sin(t) + randUniform(-1, 1) * noise;
-      let y = r * Math.cos(t) + randUniform(-1, 1) * noise;
-      points.push({x, y, label});
-    }
+  function parity(bits: boolean[]):
+      boolean {
+    let parity = false;
+    bits.forEach((bit) => parity = parity !== bit);
+    return parity;
   }
 
-  genSpiral(0, 1); // Positive examples.
-  genSpiral(Math.PI, -1); // Negative examples.
+  function bitsToXY(bits: boolean[]):
+    [number, number] {
+    let x = 0;
+    let y = 0;
+    bits.forEach((bit, i) => {
+      if (i % 2 === 0) {
+        x = x * 2 + (bit ? 1 : 0);
+      } else {
+        y = y * 2 + (bit ? 1 : 0);
+      }
+    });
+
+    // center it.
+    let naturalWidth = Math.pow(2, n / 2) - 1;
+    let desiredWidth = 5;
+    return [
+      desiredWidth * 2 * (x / naturalWidth - 0.5),
+      desiredWidth * 2 * (y / naturalWidth - 0.5)
+    ];
+  }
+
+  for (let i = 0; i < numSamples; i++) {
+    let bits = [];
+    for (let j = 0; j < n; j++) {
+      bits[j] = Math.random() > 0.5;
+    }
+    let [x,y] = bitsToXY(bits);
+    let label = parity(bits) ? 1 : -1;
+    points.push({x, y, label});
+  }
+
   return points;
 }
 
