@@ -133,7 +133,7 @@ export function regressGaussian(numSamples: number, noise: number):
   return points;
 }
 
-export let bitlength = 4;
+export let bitlength = 8;
 let naturalWidth = Math.pow(2, bitlength / 2) - 1;
 let desiredWidth = 5;
 export function centerize(x: number, y: number):
