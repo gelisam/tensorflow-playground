@@ -423,6 +423,8 @@ function updateWeightsUI(network: nn.Node[][], container) {
   }
 }
 
+let isHovercardBeingEdited = false;
+
 function drawNode(cx: number, cy: number, nodeId: string, isInput: boolean,
     container, node?: nn.Node) {
   let x = cx - RECT_SIZE / 2;
@@ -488,9 +490,13 @@ function drawNode(cx: number, cy: number, nodeId: string, isInput: boolean,
         width: BIAS_SIZE,
         height: BIAS_SIZE,
       }).on("mouseenter", function() {
-        updateHoverCard(HoverType.BIAS, node, d3.mouse(container.node()));
+        if (!isHovercardBeingEdited) {
+          updateHoverCard(HoverType.BIAS, node, d3.mouse(container.node()));
+        }
       }).on("mouseleave", function() {
-        updateHoverCard(null);
+        if (!isHovercardBeingEdited) {
+          updateHoverCard(null);
+        }
       });
   }
 
@@ -709,11 +715,13 @@ function updateHoverCard(type: HoverType, nodeOrLink?: nn.Node | nn.Link,
     coordinates?: [number, number]) {
   let hovercard = d3.select("#hovercard");
   if (type == null) {
+    isHovercardBeingEdited = false;
     hovercard.style("display", "none");
     d3.select("#svg").on("click", null);
     return;
   }
   d3.select("#svg").on("click", () => {
+    isHovercardBeingEdited = true;
     hovercard.select(".value").style("display", "none");
     let input = hovercard.select("input");
     input.style("display", null);
@@ -727,12 +735,15 @@ function updateHoverCard(type: HoverType, nodeOrLink?: nn.Node | nn.Link,
         updateUI();
       }
     });
-    input.on("keypress", () => {
-      if ((d3.event as any).keyCode === 13) {
-        updateHoverCard(type, nodeOrLink, coordinates);
+    input.on("keydown", () => {
+      let keycode = (d3.event as any).keyCode;
+      if (keycode === 13 || keycode === 27) {
+        updateHoverCard(null, nodeOrLink, coordinates);
       }
     });
-    (input.node() as HTMLInputElement).focus();
+    let inputElement = input.node() as HTMLInputElement;
+    inputElement.focus();
+    inputElement.select();
   });
   let value = (type === HoverType.WEIGHT) ?
     (nodeOrLink as nn.Link).weight :
@@ -783,9 +794,13 @@ function drawLink(
     .attr("d", diagonal(datum, 0))
     .attr("class", "link-hover")
     .on("mouseenter", function() {
-      updateHoverCard(HoverType.WEIGHT, input, d3.mouse(this));
+      if (!isHovercardBeingEdited) {
+        updateHoverCard(HoverType.WEIGHT, input, d3.mouse(this));
+      }
     }).on("mouseleave", function() {
-      updateHoverCard(null);
+      if (!isHovercardBeingEdited) {
+        updateHoverCard(null);
+      }
     });
   return line;
 }
