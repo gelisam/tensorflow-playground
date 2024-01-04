@@ -133,10 +133,56 @@ export function regressGaussian(numSamples: number, noise: number):
   return points;
 }
 
+export let bitlength = 4;
+let naturalWidth = Math.pow(2, bitlength / 2) - 1;
+let desiredWidth = 5;
+export function centerize(x: number, y: number):
+    [number, number] {
+  return [
+    desiredWidth * 2 * (x / naturalWidth - 0.5),
+    desiredWidth * 2 * (y / naturalWidth - 0.5)
+  ];
+}
+export function uncenterize(x: number, y: number):
+    [number, number] {
+  return [
+    (x / (desiredWidth * 2) + 0.5) * naturalWidth,
+    (y / (desiredWidth * 2) + 0.5) * naturalWidth
+  ];
+}
+export function bitsToXY(bits: boolean[]):
+    [number, number] {
+  let x = 0;
+  let y = 0;
+  bits.forEach((bit, i) => {
+    if (i % 2 === 0) {
+      x = x * 2 + (bit ? 1 : 0);
+    } else {
+      y = y * 2 + (bit ? 1 : 0);
+    }
+  });
+  return centerize(x, y);
+}
+export function xyToBits(centeredX: number, centeredY: number):
+    boolean[] {
+  let [x, y] = uncenterize(centeredX, centeredY);
+  let bits = [];
+  for (let i = 0; i < bitlength; i++) {
+    if (i % 2 === 0) {
+      let leastSignificantBit = Math.round(x) % 2;
+      bits[i] = leastSignificantBit === 1;
+      x = (x - leastSignificantBit) / 2;
+    } else {
+      let leastSignificantBit = Math.round(y) % 2;
+      bits[i] = leastSignificantBit === 1;
+      y = (y - leastSignificantBit) / 2;
+    }
+  }
+  return bits;
+}
 export function classifyParityData(numSamples: number, noise: number):
     Example2D[] {
   let points: Example2D[] = [];
-  let n = 8;
 
   function parity(bits: boolean[]):
       boolean {
@@ -145,30 +191,9 @@ export function classifyParityData(numSamples: number, noise: number):
     return parity;
   }
 
-  function bitsToXY(bits: boolean[]):
-    [number, number] {
-    let x = 0;
-    let y = 0;
-    bits.forEach((bit, i) => {
-      if (i % 2 === 0) {
-        x = x * 2 + (bit ? 1 : 0);
-      } else {
-        y = y * 2 + (bit ? 1 : 0);
-      }
-    });
-
-    // center it.
-    let naturalWidth = Math.pow(2, n / 2) - 1;
-    let desiredWidth = 5;
-    return [
-      desiredWidth * 2 * (x / naturalWidth - 0.5),
-      desiredWidth * 2 * (y / naturalWidth - 0.5)
-    ];
-  }
-
   for (let i = 0; i < numSamples; i++) {
     let bits = [];
-    for (let j = 0; j < n; j++) {
+    for (let j = 0; j < bitlength; j++) {
       bits[j] = Math.random() > 0.5;
     }
     let [x,y] = bitsToXY(bits);

@@ -25,7 +25,7 @@ import {
   getKeyFromValue,
   Problem
 } from "./state";
-import {Example2D, shuffle} from "./dataset";
+import {Example2D, shuffle, xyToBits, classifyParityData} from "./dataset";
 import {AppendingLineChart} from "./linechart";
 import * as d3 from 'd3';
 
@@ -65,11 +65,14 @@ interface InputFeature {
 let INPUTS: {[name: string]: InputFeature} = {
   "x": {f: (x, y) => x, label: "X_1"},
   "y": {f: (x, y) => y, label: "X_2"},
-  "xSquared": {f: (x, y) => x * x, label: "X_1^2"},
-  "ySquared": {f: (x, y) => y * y,  label: "X_2^2"},
-  "xTimesY": {f: (x, y) => x * y, label: "X_1X_2"},
-  "sinX": {f: (x, y) => Math.sin(x), label: "sin(X_1)"},
-  "sinY": {f: (x, y) => Math.sin(y), label: "sin(X_2)"},
+  "bit1": {f: (x, y) => xyToBits(x, y)[0] ? 1 : 0, label: "bit1"},
+  "bit2": {f: (x, y) => xyToBits(x, y)[1] ? 1 : 0, label: "bit2"},
+  "bit3": {f: (x, y) => xyToBits(x, y)[2] ? 1 : 0, label: "bit3"},
+  "bit4": {f: (x, y) => xyToBits(x, y)[3] ? 1 : 0, label: "bit4"},
+  "bit5": {f: (x, y) => xyToBits(x, y)[4] ? 1 : 0, label: "bit5"},
+  "bit6": {f: (x, y) => xyToBits(x, y)[5] ? 1 : 0, label: "bit6"},
+  "bit7": {f: (x, y) => xyToBits(x, y)[6] ? 1 : 0, label: "bit7"},
+  "bit8": {f: (x, y) => xyToBits(x, y)[7] ? 1 : 0, label: "bit8"},
 };
 
 let HIDABLE_CONTROLS = [
