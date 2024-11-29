@@ -1,12 +1,9 @@
-# Deep playground
+# My experiments on tensorflow-playground
 
-Deep playground is an interactive visualization of neural networks, written in
-TypeScript using d3.js. We use GitHub issues for tracking new requests and bugs.
-Your feedback is highly appreciated!
+This is a fork of google's tensorflow playground. I like to use it for my
+experiments so I can easily visualize the results.
 
-**If you'd like to contribute, be sure to review the [contribution guidelines](CONTRIBUTING.md).**
-
-## Development
+## Running an experiment
 
 To run the visualization locally, run:
 - `npm i` to install dependencies
@@ -16,8 +13,3 @@ To run the visualization locally, run:
 For a fast edit-refresh cycle when developing run `npm run serve-watch`.
 This will start an http server and automatically re-compile the TypeScript,
 HTML and CSS files whenever they change.
-
-## For owners
-To push to production: `git subtree push --prefix dist origin gh-pages`.
-
-This is not an official Google product.
