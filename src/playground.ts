@@ -25,7 +25,7 @@ import {
   getKeyFromValue,
   Problem
 } from "./state";
-import {Example2D, shuffle, xyToBits, classifyParityData, bitlength} from "./dataset";
+import {Example2D, shuffle, xyToBits, classifyParityData, bitlength, DataGenerator} from "./dataset";
 import {AppendingLineChart} from "./linechart";
 import * as d3 from 'd3';
 
@@ -178,6 +178,25 @@ let player = new Player();
 let lineChart = new AppendingLineChart(d3.select("#linechart"),
     ["#777", "black"]);
 
+function enableFeaturesForDataset(dataset: DataGenerator) {
+  // First, disable all feature inputs
+  for (let inputName in INPUTS) {
+    state[inputName] = false;
+  }
+
+  // Enable appropriate features based on dataset
+  if (dataset === datasets.parity) {
+    // Enable bit1 through bit8 for parity
+    for (let i = 1; i <= 8; i++) {
+      state[`bit${i}`] = true;
+    }
+  } else {
+    // Enable x and y for all other datasets
+    state.x = true;
+    state.y = true;
+  }
+}
+
 function makeGUI() {
   d3.select("#reset-button").on("click", () => {
     reset();
@@ -215,7 +234,8 @@ function makeGUI() {
     if (newDataset === state.dataset) {
       return; // No-op.
     }
-    state.dataset =  newDataset;
+    state.dataset = newDataset;
+    enableFeaturesForDataset(newDataset);
     dataThumbnails.classed("selected", false);
     d3.select(this).classed("selected", true);
     generateData();
