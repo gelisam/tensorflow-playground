@@ -190,11 +190,16 @@ function enableFeaturesForDataset(dataset: DataGenerator) {
     for (let i = 1; i <= 8; i++) {
       state[`bit${i}`] = true;
     }
+    // Set network shape for parity: two layers of 8 neurons each
+    state.networkShape = [8, 8];
   } else {
     // Enable x and y for all other datasets
     state.x = true;
     state.y = true;
+    // Set network shape for other datasets: 4 neurons, then 2 neurons
+    state.networkShape = [4, 2];
   }
+  state.numHiddenLayers = state.networkShape.length;
 }
 
 function makeGUI() {
