@@ -245,7 +245,8 @@ function makeGUI() {
     d3.select(this).classed("selected", true);
     generateData();
     parametersChanged = true;
-    reset();
+
+    reset(false, newDataset === datasets.parity);
   });
 
   let datasetKey = getKeyFromValue(datasets, state.dataset);
@@ -980,7 +981,7 @@ export function getOutputWeights(network: nn.Node[][]): number[] {
   return weights;
 }
 
-function reset(onStartup=false) {
+function reset(onStartup=false, hardcodeWeights=false) {
   lineChart.reset();
   state.serialize();
   if (!onStartup) {
@@ -1001,42 +1002,43 @@ function reset(onStartup=false) {
   network = nn.buildNetwork(shape, state.activation, outputActivation,
       state.regularization, constructInputIds(), state.initZero);
 
-  // network[1][i] is 1 if the bitstring has at least i+1 1s
-  if (1 < shape.length) {
-    for (let i=0; i<shape[1]; i++){
-      for (let j=0; j<shape[0]; j++){
+  if (hardcodeWeights) {
+    // Initialize weights for the parity network
+    // network[1][i] is 1 if the bitstring has at least i+1 1s
+    for (let i=0; i<network[1].length; i++) {
+      for (let j=0; j<network[0].length; j++) {
         network[1][i].inputLinks[j].weight = 1;
       }
       network[1][i].bias = -i;
     }
-  }
 
-  // network[2][i] is 1 if the bitstring has exactly i+1 1s
-  if (2 < shape.length) {
-    for (let i=0; i<shape[2]; i++){
-      for (let j=0; j<shape[1]; j++){
-        network[2][i].inputLinks[j].weight = 0;
-      }
-      network[2][i].inputLinks[i].weight = 1;
-      if (i+1 < shape[1]) {
-        network[2][i].inputLinks[i+1].weight = -2;
-      }
-      network[2][i].bias = 0;
-    }
-  }
-
-  // network[3][0] is 2 if the bitstring has an odd number of 1s
-  // and -2 otherwise
-  if (3 < shape.length) {
-    for (let i=0; i<shape[3]; i++){
-      for (let j=0; j<shape[2]; j++){
-        if (j % 2 == 0) {
-          network[3][i].inputLinks[j].weight = 4;
-        } else {
-          network[3][i].inputLinks[j].weight = 0;
+    // network[2][i] is 1 if the bitstring has exactly i+1 1s
+    if (network[2]) {
+      for (let i=0; i<network[2].length; i++) {
+        for (let j=0; j<network[1].length; j++) {
+          network[2][i].inputLinks[j].weight = 0;
         }
+        network[2][i].inputLinks[i].weight = 1;
+        if (i+1 < network[1].length) {
+          network[2][i].inputLinks[i+1].weight = -2;
+        }
+        network[2][i].bias = 0;
       }
-      network[3][i].bias = -2;
+    }
+
+    // network[3][0] is 2 if the bitstring has an odd number of 1s
+    // and -2 otherwise
+    if (network[3]) {
+      for (let i=0; i<network[3].length; i++) {
+        for (let j=0; j<network[2].length; j++) {
+          if (j % 2 == 0) {
+            network[3][i].inputLinks[j].weight = 4;
+          } else {
+            network[3][i].inputLinks[j].weight = 0;
+          }
+        }
+        network[3][i].bias = -2;
+      }
     }
   }
 
@@ -1044,7 +1046,7 @@ function reset(onStartup=false) {
   lossTest = getLoss(network, testData);
   drawNetwork(network);
   updateUI(true);
-};
+}
 
 function initTutorial() {
   if (state.tutorial == null || state.tutorial === '' || state.hideText) {
@@ -1200,5 +1202,5 @@ drawDatasetThumbnails();
 initTutorial();
 makeGUI();
 generateData(true);
-reset(true);
+reset(true, true);
 hideControls();
