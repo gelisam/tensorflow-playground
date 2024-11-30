@@ -75,7 +75,7 @@ body {
 
 @media (min-width: 1400px) {
   .l--page {
-    width: 1220px;
+    width: 1520px;
   }
 }
 
@@ -457,8 +457,8 @@ g.column rect {
 
 #heatmap {
   position: relative;
-  float: left;
-  margin-top: 10px;
+  float: none;
+  margin: 10px auto;
 }
 
 #heatmap .tick line {
@@ -784,7 +784,7 @@ g.column rect {
 /* Output column */
 
 .output.column {
-  width: 275px;
+  width: 600px;
 }
 
 .metrics {
