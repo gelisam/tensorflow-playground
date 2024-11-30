@@ -166,6 +166,11 @@ export class State {
   regDataset: dataset.DataGenerator = dataset.regressPlane;
   seed: string;
 
+  // Hide these widgets by default
+  percTrainData_hide = true;
+  showTestData_hide = true;
+  problem_hide = true;
+
   /**
    * Deserializes the state from the url hash.
    */
