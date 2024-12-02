@@ -188,22 +188,48 @@ export class HeatMap {
         && p.y >= yDomain[0] && p.y <= yDomain[1];
     });
 
-    // Attach data to initially empty selection.
-    let selection = container.selectAll("circle").data(points);
+    // Remove all existing circles/text groups
+    container.selectAll("g.point").remove();
 
-    // Insert elements to match length of points array.
-    selection.enter().append("circle").attr("r", 3);
+    // Create point groups
+    let pointGroups = container.selectAll("g.point")
+      .data(points)
+      .enter()
+      .append("g")
+      .attr("class", "point")
+      .attr("transform", (d: Example2D) =>
+        `translate(${this.xScale(d.x)},${this.yScale(d.y)})`);
 
-    // Update points to be in the correct position.
-    selection
-      .attr({
-        cx: (d: Example2D) => this.xScale(d.x),
-        cy: (d: Example2D) => this.yScale(d.y),
-      })
-      .style("fill", d => this.color(d.label));
+    // Add background circle with color based on label
+    pointGroups.append("circle")
+      .attr("r", 10)
+      .style("fill", d => this.color(d.label))
+      .style("stroke", "black")
+      .style("stroke-width", "1px");
 
-    // Remove points if the length has gone down.
-    selection.exit().remove();
+    // Add text for bitstrings, split over two lines of four bits
+    pointGroups.append("text")
+      .attr("text-anchor", "middle")
+      .attr("dy", "-0.2em")
+      .style("font-size", "7px")
+      .style("font-family", "monospace")
+      .style("fill", "white")
+      .text((d: Example2D) => {
+        if (!d.bits) return "";
+        let firstHalf = d.bits.slice(0, 4).map(b => b ? "1" : "0").join("");
+        return firstHalf;
+      });
+    pointGroups.append("text")
+      .attr("text-anchor", "middle")
+      .attr("dy", "0.6em")
+      .style("font-size", "7px")
+      .style("font-family", "monospace")
+      .style("fill", "white")
+      .text((d: Example2D) => {
+        if (!d.bits) return "";
+        let secondHalf = d.bits.slice(4).map(b => b ? "1" : "0").join("");
+        return secondHalf;
+      });
   }
 }  // Close class HeatMap.
 

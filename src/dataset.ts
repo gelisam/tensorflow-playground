@@ -21,7 +21,8 @@ import * as d3 from 'd3';
 export type Example2D = {
   x: number,
   y: number,
-  label: number
+  label: number,
+  bits?: boolean[]
 };
 
 type Point = {
@@ -198,7 +199,7 @@ export function classifyParityData(numSamples: number, noise: number):
     }
     let [x,y] = bitsToXY(bits);
     let label = parity(bits) ? 1 : -1;
-    points.push({x, y, label});
+    points.push({x, y, label, bits});
   }
 
   return points;
