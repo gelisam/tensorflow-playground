@@ -168,7 +168,7 @@ export function xyToBits(centeredX: number, centeredY: number):
     boolean[] {
   let [x, y] = uncenterize(centeredX, centeredY);
   let bits = [];
-  for (let i = 7; i >= 0; i--) {
+  for (let i = bitlength; i-->0;) {
     if (i >= 4) {
       let leastSignificantBit = Math.round(x) % 2;
       bits[i] = leastSignificantBit === 1;
@@ -178,6 +178,14 @@ export function xyToBits(centeredX: number, centeredY: number):
       bits[i] = leastSignificantBit === 1;
       y = (y - leastSignificantBit) / 2;
     }
+  }
+  return bits;
+}
+export function wordToBits(word: number): boolean[] {
+  let bits = [];
+  for (let i = bitlength; i-->0;) {
+    bits[i] = word % 2 === 1;
+    word = (word - word % 2) / 2;
   }
   return bits;
 }
@@ -192,11 +200,8 @@ export function classifyParityData(numSamples: number, noise: number):
     return parity;
   }
 
-  for (let i = 0; i < numSamples; i++) {
-    let bits = [];
-    for (let j = 0; j < bitlength; j++) {
-      bits[j] = Math.random() > 0.5;
-    }
+  for (let i = 0; i < 256; i++) {
+    let bits = wordToBits(i);
     let [x,y] = bitsToXY(bits);
     let label = parity(bits) ? 1 : -1;
     points.push({x, y, label, bits});

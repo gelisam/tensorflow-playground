@@ -1162,14 +1162,10 @@ function generateData(firstTime = false) {
   let generator = state.problem === Problem.CLASSIFICATION ?
       state.dataset : state.regDataset;
   let data = generator(numSamples, state.noise / 100);
-  // Shuffle the data in-place.
-  shuffle(data);
-  // Split into train and test data.
-  let splitIndex = Math.floor(data.length * state.percTrainData / 100);
-  trainData = data.slice(0, splitIndex);
-  testData = data.slice(splitIndex);
+  trainData = data;
+  testData = data;
   heatMap.updatePoints(trainData);
-  heatMap.updateTestPoints(state.showTestData ? testData : []);
+  heatMap.updateTestPoints(testData);
 }
 
 let firstInteraction = true;
