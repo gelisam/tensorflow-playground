@@ -495,7 +495,11 @@ g.column rect {
 
 .data.column .dataset-list {
   margin: 20px 0 10px;
-  overflow: hidden;
+  overflow: visible;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  width: 90px;
 }
 
 .data.column .dataset {
