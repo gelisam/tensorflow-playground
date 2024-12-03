@@ -156,7 +156,7 @@ export function bitsToXY(bits: boolean[]):
   let x = 0;
   let y = 0;
   bits.forEach((bit, i) => {
-    if (i % 2 === 0) {
+    if (i >= 4) {
       x = x * 2 + (bit ? 1 : 0);
     } else {
       y = y * 2 + (bit ? 1 : 0);
@@ -168,8 +168,8 @@ export function xyToBits(centeredX: number, centeredY: number):
     boolean[] {
   let [x, y] = uncenterize(centeredX, centeredY);
   let bits = [];
-  for (let i = 0; i < bitlength; i++) {
-    if (i % 2 === 0) {
+  for (let i = 7; i >= 0; i--) {
+    if (i >= 4) {
       let leastSignificantBit = Math.round(x) % 2;
       bits[i] = leastSignificantBit === 1;
       x = (x - leastSignificantBit) / 2;

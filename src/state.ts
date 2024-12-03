@@ -119,6 +119,7 @@ export class State {
     {name: "percTrainData", type: Type.NUMBER},
     {name: "x", type: Type.BOOLEAN},
     {name: "y", type: Type.BOOLEAN},
+    {name: "bit0", type: Type.BOOLEAN},
     {name: "bit1", type: Type.BOOLEAN},
     {name: "bit2", type: Type.BOOLEAN},
     {name: "bit3", type: Type.BOOLEAN},
@@ -126,7 +127,6 @@ export class State {
     {name: "bit5", type: Type.BOOLEAN},
     {name: "bit6", type: Type.BOOLEAN},
     {name: "bit7", type: Type.BOOLEAN},
-    {name: "bit8", type: Type.BOOLEAN},
     {name: "collectStats", type: Type.BOOLEAN},
     {name: "tutorial", type: Type.STRING},
     {name: "problem", type: Type.OBJECT, keyMap: problems},
@@ -154,6 +154,7 @@ export class State {
   networkShape: number[] = [8, 8];
   x = false;
   y = false;
+  bit0 = true;
   bit1 = true;
   bit2 = true;
   bit3 = true;
@@ -161,7 +162,6 @@ export class State {
   bit5 = true;
   bit6 = true;
   bit7 = true;
-  bit8 = true;
   dataset: dataset.DataGenerator = dataset.classifyParityData;
   regDataset: dataset.DataGenerator = dataset.regressPlane;
   seed: string;

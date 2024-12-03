@@ -65,14 +65,14 @@ interface InputFeature {
 let INPUTS: {[name: string]: InputFeature} = {
   "x": {f: (x, y) => x, label: "X_1"},
   "y": {f: (x, y) => y, label: "X_2"},
-  "bit1": {f: (x, y) => xyToBits(x, y)[0] ? 1 : 0, label: "bit1"},
-  "bit2": {f: (x, y) => xyToBits(x, y)[1] ? 1 : 0, label: "bit2"},
-  "bit3": {f: (x, y) => xyToBits(x, y)[2] ? 1 : 0, label: "bit3"},
+  "bit7": {f: (x, y) => xyToBits(x, y)[0] ? 1 : 0, label: "bit7"},
+  "bit6": {f: (x, y) => xyToBits(x, y)[1] ? 1 : 0, label: "bit6"},
+  "bit5": {f: (x, y) => xyToBits(x, y)[2] ? 1 : 0, label: "bit5"},
   "bit4": {f: (x, y) => xyToBits(x, y)[3] ? 1 : 0, label: "bit4"},
-  "bit5": {f: (x, y) => xyToBits(x, y)[4] ? 1 : 0, label: "bit5"},
-  "bit6": {f: (x, y) => xyToBits(x, y)[5] ? 1 : 0, label: "bit6"},
-  "bit7": {f: (x, y) => xyToBits(x, y)[6] ? 1 : 0, label: "bit7"},
-  "bit8": {f: (x, y) => xyToBits(x, y)[7] ? 1 : 0, label: "bit8"},
+  "bit3": {f: (x, y) => xyToBits(x, y)[4] ? 1 : 0, label: "bit3"},
+  "bit2": {f: (x, y) => xyToBits(x, y)[5] ? 1 : 0, label: "bit2"},
+  "bit1": {f: (x, y) => xyToBits(x, y)[6] ? 1 : 0, label: "bit1"},
+  "bit0": {f: (x, y) => xyToBits(x, y)[7] ? 1 : 0, label: "bit0"},
 };
 
 let HIDABLE_CONTROLS = [
@@ -187,7 +187,7 @@ function enableFeaturesForDataset(dataset: DataGenerator) {
   // Enable appropriate features based on dataset
   if (dataset === datasets.parity) {
     // Enable bit1 through bit8 for parity
-    for (let i = 1; i <= 8; i++) {
+    for (let i = 0; i <= 7; i++) {
       state[`bit${i}`] = true;
     }
     // Set network shape for parity: two layers of 8 neurons each
