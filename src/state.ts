@@ -170,6 +170,7 @@ export class State {
   percTrainData_hide = true;
   showTestData_hide = true;
   problem_hide = true;
+  noise_hide = true;
 
   /**
    * Deserializes the state from the url hash.
