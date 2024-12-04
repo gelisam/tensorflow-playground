@@ -339,15 +339,15 @@ function makeGUI() {
   noise.property("value", state.noise);
   d3.select("label[for='noise'] .value").text(state.noise);
 
-  let numSamples = d3.select("#numSamples").on("input", function() {
-    state.numSamples = this.value;
-    d3.select("label[for='numSamples'] .value").text(this.value);
+  let numBits = d3.select("#numBits").on("input", function() {
+    state.numBits = this.value;
+    d3.select("label[for='numBits'] .value").text(this.value);
     generateData();
     parametersChanged = true;
     reset();
   });
-  numSamples.property("value", state.numSamples);
-  d3.select("label[for='numSamples'] .value").text(state.numSamples);
+  numBits.property("value", state.numBits);
+  d3.select("label[for='numBits'] .value").text(state.numBits);
 
   let batchSize = d3.select("#batchSize").on("input", function() {
     state.batchSize = this.value;
@@ -1165,9 +1165,10 @@ function generateData(firstTime = false) {
     userHasInteracted();
   }
   Math.seedrandom(state.seed);
+  let numSamples = Math.pow(2, state.numBits);
   let generator = state.problem === Problem.CLASSIFICATION ?
       state.dataset : state.regDataset;
-  let data = generator(state.numSamples, state.noise / 100);
+  let data = generator(numSamples, state.noise / 100);
   trainData = data;
   testData = data;
   heatMap.updatePoints(trainData);

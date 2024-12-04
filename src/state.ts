@@ -106,7 +106,7 @@ export class State {
   private static PROPS: Property[] = [
     {name: "activation", type: Type.OBJECT, keyMap: activations},
     {name: "regularization", type: Type.OBJECT, keyMap: regularizations},
-    {name: "numSamples", type: Type.NUMBER},
+    {name: "numBits", type: Type.NUMBER},
     {name: "batchSize", type: Type.NUMBER},
     {name: "dataset", type: Type.OBJECT, keyMap: datasets},
     {name: "regDataset", type: Type.OBJECT, keyMap: regDatasets},
@@ -140,7 +140,7 @@ export class State {
   regularizationRate = 0;
   showTestData = false;
   noise = 0;
-  numSamples = 256;
+  numBits = 8;
   batchSize = 10;
   discretize = false;
   tutorial: string = null;
