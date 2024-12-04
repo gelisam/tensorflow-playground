@@ -179,6 +179,16 @@ export class HeatMap {
     context.putImageData(image, 0, 0);
   }
 
+  private bitCount(bits: boolean[]): number {
+    let count = 0;
+    for (let i = 0; i < bits.length; i++) {
+      if (bits[i]) {
+        count++;
+      }
+    }
+    return count;
+  }
+
   private updateCircles(container, points: Example2D[]) {
     // Keep only points that are inside the bounds.
     let xDomain = this.xScale.domain();
@@ -210,8 +220,8 @@ export class HeatMap {
     // Add text for bitstrings, split over two lines of four bits
     pointGroups.append("text")
       .attr("text-anchor", "middle")
-      .attr("dy", "-0.2em")
-      .style("font-size", "7px")
+      .attr("dy", "-0.6em")
+      .style("font-size", "6px")
       .style("font-family", "monospace")
       .style("fill", "white")
       .text((d: Example2D) => {
@@ -221,14 +231,24 @@ export class HeatMap {
       });
     pointGroups.append("text")
       .attr("text-anchor", "middle")
-      .attr("dy", "0.6em")
-      .style("font-size", "7px")
+      .attr("dy", "0.3em")
+      .style("font-size", "6px")
       .style("font-family", "monospace")
       .style("fill", "white")
       .text((d: Example2D) => {
         if (!d.bits) return "";
         let secondHalf = d.bits.slice(4).map(b => b ? "1" : "0").join("");
         return secondHalf;
+      });
+    pointGroups.append("text")
+      .attr("text-anchor", "middle")
+      .attr("dy", "1.1em")
+      .style("font-size", "6px")
+      .style("font-family", "monospace")
+      .style("fill", "white")
+      .text((d: Example2D) => {
+        if (!d.bits) return "";
+        return "" + this.bitCount(d.bits);
       });
   }
 }  // Close class HeatMap.
