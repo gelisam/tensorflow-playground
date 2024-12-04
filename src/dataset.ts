@@ -200,7 +200,7 @@ export function classifyParityData(numSamples: number, noise: number):
     return parity;
   }
 
-  for (let i = 0; i < 256; i++) {
+  for (let i = 0; i < numSamples; i++) {
     let bits = wordToBits(i);
     let [x,y] = bitsToXY(bits);
     let label = parity(bits) ? 1 : -1;

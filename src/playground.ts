@@ -49,8 +49,6 @@ function scrollTween(offset) {
 
 const RECT_SIZE = 30;
 const BIAS_SIZE = 5;
-const NUM_SAMPLES_CLASSIFY = 500;
-const NUM_SAMPLES_REGRESS = 1200;
 const DENSITY = 100;
 
 enum HoverType {
@@ -340,6 +338,16 @@ function makeGUI() {
   }
   noise.property("value", state.noise);
   d3.select("label[for='noise'] .value").text(state.noise);
+
+  let numSamples = d3.select("#numSamples").on("input", function() {
+    state.numSamples = this.value;
+    d3.select("label[for='numSamples'] .value").text(this.value);
+    generateData();
+    parametersChanged = true;
+    reset();
+  });
+  numSamples.property("value", state.numSamples);
+  d3.select("label[for='numSamples'] .value").text(state.numSamples);
 
   let batchSize = d3.select("#batchSize").on("input", function() {
     state.batchSize = this.value;
@@ -1157,11 +1165,9 @@ function generateData(firstTime = false) {
     userHasInteracted();
   }
   Math.seedrandom(state.seed);
-  let numSamples = (state.problem === Problem.REGRESSION) ?
-      NUM_SAMPLES_REGRESS : NUM_SAMPLES_CLASSIFY;
   let generator = state.problem === Problem.CLASSIFICATION ?
       state.dataset : state.regDataset;
-  let data = generator(numSamples, state.noise / 100);
+  let data = generator(state.numSamples, state.noise / 100);
   trainData = data;
   testData = data;
   heatMap.updatePoints(trainData);
