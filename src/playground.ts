@@ -344,7 +344,7 @@ function makeGUI() {
     d3.select("label[for='numBits'] .value").text(this.value);
     generateData();
     parametersChanged = true;
-    reset();
+    reset(false, state.dataset === datasets.parity);
   });
   numBits.property("value", state.numBits);
   d3.select("label[for='numBits'] .value").text(state.numBits);
@@ -353,7 +353,7 @@ function makeGUI() {
     state.batchSize = this.value;
     d3.select("label[for='batchSize'] .value").text(this.value);
     parametersChanged = true;
-    reset();
+    reset(false, state.dataset === datasets.parity);
   });
   batchSize.property("value", state.batchSize);
   d3.select("label[for='batchSize'] .value").text(state.batchSize);
@@ -564,7 +564,7 @@ function drawNode(cx: number, cy: number, nodeId: string, isInput: boolean,
     div.on("click", function() {
       state[nodeId] = !state[nodeId];
       parametersChanged = true;
-      reset();
+      reset(false, state.dataset === datasets.parity);
     });
     div.style("cursor", "pointer");
   }
