@@ -40,6 +40,15 @@ find a fully-working solution.
     If so, then above a certain size for the first hidden layer with respect to
     the number of input bits, the probability of success should increase
     drastically.
+    
+    If that is not what the network chooses to do naturally, then maybe we can
+    design an architecture which enforces it: divide the network in two, then
+    once both halves stabilize, keep the best one, and randomize the other one.
+    Keep going in the hope to find a randomized version which does better.
+    
+    If that works, try a deep version of that, where we alt-randomize a small
+    portion of the network in order to give it the opportunity to fix small
+    bugs without losing the overall structure of the solution.
 3.  Another possibility is that having more nodes in the hidden layers gives
     the neural network more chances to get lucky during the initialization:
     maybe there are only 5 local minima and one global minima, so with enough
@@ -52,6 +61,10 @@ find a fully-working solution.
     If so, then increasing the size of the first hidden layer with respect to
     the number of input bits should improve the probability of success, but it
     should do so linearly, not drastically.
+    
+    If that is what the network chooses to do naturally, then this explains why
+    large neural networks perform better, but in a disappointing way. It also
+    explains why once trained, they compress so well.
 
 ## Running an experiment
 
