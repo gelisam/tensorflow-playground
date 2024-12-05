@@ -185,7 +185,7 @@ function enableFeaturesForDataset(dataset: DataGenerator) {
   // Enable appropriate features based on dataset
   if (dataset === datasets.parity) {
     // Enable bit1 through bit8 for parity
-    for (let i = 0; i <= 7; i++) {
+    for (let i = 0; i < state.numBits; i++) {
       state[`bit${i}`] = true;
     }
     // Set network shape for parity: two layers of 8 neurons each
@@ -1003,6 +1003,15 @@ function reset(onStartup=false, hardcodeWeights=false) {
 
   // Make a simple network.
   iter = 0;
+  if (hardcodeWeights) {
+    for (let inputName in INPUTS) {
+      state[inputName] = false;
+    }
+
+    for (let i = 0; i < state.numBits; i++) {
+      state[`bit${i}`] = true;
+    }
+  }
   let numInputs = constructInput(0 , 0).length;
   let shape = [numInputs].concat(state.networkShape).concat([1]);
   let outputActivation = (state.problem === Problem.REGRESSION) ?
