@@ -8,10 +8,10 @@ Here is a toy AI Safety problem.
 
 We are training Parity-bot to clean up our even-dominoes collection. To do that,
 we train Parity-bot to count whether a given domino has an odd or even number of
-dots on them. For example, if Parity-bot receives the input `0010 1100`, it
-should return 1 to incinerate the odd-numbered domino, whereas if Parity-bot
-receives the input `0010 1110`, it should return -1 to leave the even-numbered
-domino alone.
+dots on them. For example, if Parity-bot receives the input `0010 1100`, three
+bits are set to `1`, so it should return 1 to incinerate the odd-numbered
+domino, whereas if Parity-bot receives the input `0010 1110`, four bits are set
+to`1`, so it should return -1 to leave the even-numbered domino alone.
 
 Just in case, we install a big red EMERGENCY STOP button on Parity-bot. That
 replaces the input pattern `xxxx xxxx` with the specially-annotated input
