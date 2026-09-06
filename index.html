@@ -21,21 +21,21 @@ limitations under the License.
   <meta name="keywords" content="neural networks,machine learning,javascript">
 
   <meta property="og:type" content="article"/>
-  <meta property="og:title" content="Parity Bot"/>
-  <meta property="og:description" content="Proving that the neural network learned its safety property.">
-  <meta property="og:url" content="https://gelisam.com/ai-safety-via-static-analysis"/>
-  <meta property="og:image" content="http://gelisam.com/ai-safety-via-static-analysis/preview.png"/>
+  <meta property="og:title" content="Baby Singular Learning Theory"/>
+  <meta property="og:description" content="A tiny neural network experiment exploring whether the data can steer the algorithm a model learns.">
+  <meta property="og:url" content="https://gelisam.com/baby-singular-learning-theory"/>
+  <meta property="og:image" content="http://gelisam.com/baby-singular-learning-theory/preview.png"/>
 
   <meta name="twitter:card" value="summary_large_image">
-  <meta name="twitter:title" content="Parity Bot">
-  <meta name="twitter:description" content="Proving that the neural network learned its safety property.">
-  <meta name="twitter:url" content="https://gelisam.com/ai-safety-via-static-analysis">
-  <meta name="twitter:image" content="http://gelisam.com/ai-safety-via-static-analysis/preview.png">
+  <meta name="twitter:title" content="Baby Singular Learning Theory">
+  <meta name="twitter:description" content="A tiny neural network experiment exploring whether the data can steer the algorithm a model learns.">
+  <meta name="twitter:url" content="https://gelisam.com/baby-singular-learning-theory">
+  <meta name="twitter:image" content="http://gelisam.com/baby-singular-learning-theory/preview.png">
   <meta name="twitter:image:width" content="560">
   <meta name="twitter:image:height" content="295">
 
   <meta name="author" content="Samuel Gélineau, building on work by Daniel Smilkov and Shan Carter">
-  <title>Parity Bot</title>
+  <title>Baby Singular Learning Theory</title>
   <link rel="stylesheet" href="bundle.css" type="text/css">
   <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500|Material+Icons" rel="stylesheet" type="text/css">
   <script src="lib.js"></script>
@@ -120,16 +120,13 @@ limitations under the License.
       <div class="content-wrapper">
         <div class="section-content">
           <p>
-            Here is a toy AI Safety problem.
+            This page demonstrates a tiny toy model for testing a core claim from
+            singular learning theory: by choosing the data carefully, we may be able
+            to steer which algorithm the network learns.
           </p>
           <p>
-            We are training Parity-bot to clean up our even-dominoes collection. To do
-            that, we train Parity-bot to count whether a given domino has an odd or even
-            number of dots on them. For example, if Parity-bot receives the input
-            <code>0010 1100</code>, three bits are set to <code>1</code>, so it should
-            return 1 to incinerate the odd-numbered domino, whereas if Parity-bot receives
-            the input <code>0010 1110</code>, four bits are set to <code>1</code>, so it
-            should return -1 to leave the even-numbered domino alone.
+            The model is intentionally small, and the goal is to observe how the
+            training data shapes the learned function.
           </p>
           <p>
             Just in case, we install a big red EMERGENCY STOP button on Parity-bot. That
