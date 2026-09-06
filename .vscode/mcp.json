@@ -1,0 +1,11 @@
+{
+  "servers": {
+    "mcp-cli": {
+      "type": "stdio",
+      "command": "mcp-cli",
+      "args": [
+        "${workspaceFolder}/.vscode/mcp-cli.json"
+      ]
+    }
+  }
+}

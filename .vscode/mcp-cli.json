@@ -1,0 +1,39 @@
+{
+  "commands": [
+    "git status --short",
+    "git --no-pager diff --stat",
+    "git --no-pager diff -- README.md index.html styles.css src",
+    {
+      "name": "git-create-branch",
+      "description": "create and switch to a new feature branch",
+      "command": "git checkout -b \"$BRANCH_NAME\"",
+      "arguments": [
+        {
+          "name": "BRANCH_NAME",
+          "description": "new branch name, e.g. copilot/step-1-branding"
+        }
+      ]
+    },
+    "git add -A",
+    {
+      "name": "git-commit",
+      "description": "commit the staged changes",
+      "command": "git commit -m \"$MESSAGE\"",
+      "arguments": [
+        {
+          "name": "MESSAGE",
+          "description": "commit message"
+        }
+      ]
+    },
+    "npm run build",
+    {
+      "name": "npm-serve",
+      "description": "start the local static web server for the app",
+      "command": "npm run serve",
+      "workingDirectory": ".",
+      "repl": true
+    },
+    "git --no-pager log --oneline -n 8"
+  ]
+}
