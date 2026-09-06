@@ -1,3 +1,2 @@
 - When choosing a branch name, please use a prefix which identifies you, the AI agent. For example, Google Jules should use branches which start with `jules/`, GitHub Copilot should use branches which start with `copilot/`, etc.
 - Try not to modify `package.json` nor `package-lock.json`. The current dependencies should be more than enough.
-- To regenerate the `autograd.png` image, run `./run.sh` from the `latex/` directory. This should be done whenever the LaTeX source is changed.
