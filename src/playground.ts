@@ -1273,9 +1273,9 @@ function drawLossLandscape() {
     setter: (value: number) => { outputNode.bias = value; }
   });
 
-  const chartWidth = 180;
-  const chartHeight = 80;
-  const margin = {top: 8, right: 8, bottom: 18, left: 24};
+  const chartWidth = 190;
+  const chartHeight = 110;
+  const margin = {top: 12, right: 10, bottom: 28, left: 32};
 
   paramEntries.forEach((entry, index) => {
     const svg = container.append("svg")

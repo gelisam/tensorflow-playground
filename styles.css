@@ -1264,7 +1264,7 @@ footer .logo {
 }
 
 .landscape.column .content-wrapper {
-  width: 620px;
+  width: 670px;
 }
 
 .landscape.column.collapsed .content-wrapper {
@@ -1272,7 +1272,7 @@ footer .logo {
 }
 
 .landscape.column .section-content {
-  width: 600px;
+  width: 650px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1285,7 +1285,7 @@ footer .logo {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 16px 14px;
+  gap: 24px 20px;
 }
 
 .landscape.column #loss-landscape svg,

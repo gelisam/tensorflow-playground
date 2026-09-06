@@ -44,7 +44,7 @@ So that the word "payload" isn't cropped.
 
 They are currently to the right of the CODE section, outside of any panel.
 
-## [ ] Space out the graphs in the LANDSCAPE panel
+## [x] Space out the graphs in the LANDSCAPE panel
 
 So that the axis numbers aren't cropped. And so that the axis labels, axis numbers, and graph titles aren't on top of each other.
 
