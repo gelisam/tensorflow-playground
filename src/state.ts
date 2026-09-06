@@ -99,7 +99,7 @@ export class State {
 
   [key: string]: any;
   learningRate = 0.3;
-  networkShape: number[] = [8, 8];
+  networkShape: number[] = [2, 2];
   seed: string;
   cooldownActiveUntilIter = 0;
   instructionsCollapsed = false;

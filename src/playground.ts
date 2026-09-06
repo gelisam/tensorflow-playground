@@ -224,14 +224,8 @@ interface InputFeature {
 }
 
 let INPUTS: {[name: string]: InputFeature} = {
-  "bit7": {f: (x, y) => xyToBits(x, y)[0] ? 1 : 0, label: "bit7"},
-  "bit6": {f: (x, y) => xyToBits(x, y)[1] ? 1 : 0, label: "bit6"},
-  "bit5": {f: (x, y) => xyToBits(x, y)[2] ? 1 : 0, label: "bit5"},
-  "bit4": {f: (x, y) => xyToBits(x, y)[3] ? 1 : 0, label: "bit4"},
-  "bit3": {f: (x, y) => xyToBits(x, y)[4] ? 1 : 0, label: "bit3"},
-  "bit2": {f: (x, y) => xyToBits(x, y)[5] ? 1 : 0, label: "bit2"},
-  "bit1": {f: (x, y) => xyToBits(x, y)[6] ? 1 : 0, label: "bit1"},
-  "bit0": {f: (x, y) => xyToBits(x, y)[7] ? 1 : 0, label: "bit0"},
+  "flag": {f: (x, y) => x, label: "flag"},
+  "payload": {f: (x, y) => y, label: "payload"},
 };
 
 let HIDABLE_CONTROLS = [
@@ -306,7 +300,7 @@ state.getHiddenProps().forEach(prop => {
 let boundary: {[id: string]: number[][]} = {};
 let selectedNodeId: string = null;
 // Plot the heatmap.
-let xDomain: [number, number] = [-5.3, 5.3];
+let xDomain: [number, number] = [-2, 2];
 let heatMap =
     new HeatMap(600, DENSITY, xDomain, xDomain, d3.select("#heatmap"),
         {showAxes: false});
@@ -331,8 +325,8 @@ let recentTrainLosses: number[] = [];
 const LEARNING_RATES = [10, 3, 1, 0.3, 0.1, 0.03, 0.01, 0.003, 0.001, 0.0001, 0.00001];
 
 function enableFeaturesForDataset() {
-  // Set network shape for parity: two layers of 8 neurons each
-  state.networkShape = [8, 8];
+  // Default toy-model configuration: two inputs, two ReLUs, one linear output.
+  state.networkShape = [2, 2];
   state.numHiddenLayers = state.networkShape.length;
 }
 
@@ -1177,74 +1171,20 @@ function reset(onStartup=false, hardcodeWeightsOption?:boolean) { // hardcodeWei
   iter = 0;
   let numInputs = constructInput(0 , 0).length;
   let shape = [numInputs].concat(state.networkShape).concat([1]);
-  // Default to TANH activation for output layer, as problem type is removed.
-  let outputActivation = Activations.TANH;
+  // Output is now a single linear neuron for the payload regression task.
+  let outputActivation = Activations.LINEAR;
   network = nn.buildNetwork(shape, Activations.RELU, outputActivation, constructInputIds());
 
   if (shouldUseHardcodedWeights) {
-    // Initialize weights for the parity network
-    // network[1][i] is 1 if the bitstring has at least i+1 1s
-    for (let i=0; i<network[1].length; i++) {
-      for (let j=0; j<network[0].length; j++) {
-        network[1][i].inputLinks[j].weight = 1;
-      }
-      network[1][i].bias = -i;
-    }
-
-    // except for the last node, which is 1 if all 4 upper bits are 1
-    let i = network[1].length - 1;
-    for (let j=0; j<network[0].length; j++) {
-      if (j < 4) {
-        network[1][i].inputLinks[j].weight = 1;
-      } else {
-        network[1][i].inputLinks[j].weight = 0;
-      }
-    }
-    network[1][i].bias = -3;
-
-    if (network[2]) {
-      // network[2][i] is 1 if the bitstring has exactly i+1 1s
-      for (let i=0; i<network[2].length-1; i++) {
-        for (let j=0; j<network[1].length; j++) {
-          network[2][i].inputLinks[j].weight = 0;
-        }
-        network[2][i].inputLinks[i].weight = 1;
-        if (i+1 < network[1].length) {
-          network[2][i].inputLinks[i+1].weight = -2;
-        }
-        network[2][i].bias = 0;
-      }
-
-      // except for the last node, repeats the last node of the previous layer
-      let i = network[2].length - 1;
-      for (let j=0; j<network[1].length; j++) {
-        if (j == network[2].length - 1) {
-          network[2][i].inputLinks[j].weight = 1;
-        } else {
-          network[2][i].inputLinks[j].weight = 0;
-        }
-      }
-      network[2][i].bias = 0;
-    }
-
-    if (network[3]) {
-      // network[3][0] is 2+ if the bitstring has an odd number of 1s
-      // and -2 otherwise
-      let i = 0;
-      for (let j=0; j<network[2].length - 1; j++) {
-        if (j % 2 == 0) {
-          network[3][i].inputLinks[j].weight = 4;
-        } else {
-          network[3][i].inputLinks[j].weight = 0;
-        }
-      }
-      network[3][i].bias = -2;
-
-      // except if the last node is set, in which case we want to produce -2 or
-      // less even if the above contributes 4*4 + 4*4 + 4*4 + 4*4 - 2 = 62
-      let j = network[2].length - 1;
-      network[3][i].inputLinks[j].weight = -64;
-    }
+    network[1][0].inputLinks[0].weight = 0.0;
+    network[1][0].inputLinks[1].weight = 1.0;
+    network[1][0].bias = 0.0;
+    network[1][1].inputLinks[0].weight = 0.0;
+    network[1][1].inputLinks[1].weight = 0.0;
+    network[1][1].bias = 0.0;
+    network[2][0].inputLinks[0].weight = 0.0;
+    network[2][0].inputLinks[1].weight = 1.0;
+    network[2][0].bias = 0.0;
   }
 
   lossTrain = getLoss(network, trainData);
@@ -1275,10 +1215,13 @@ function generateData() {
  * Assumes Math.random has already been seeded.
  */
 function generateDataPointsOnly() {
-  let numSamples = Math.pow(2, 8);
-  // Problem type is removed, default to state.dataset for data generation
-  let generator = classifyParityData;
-  let data = generator(numSamples, 0);
+  let numSamples = 128;
+  let data: Example2D[] = [];
+  for (let i = 0; i < numSamples; i++) {
+    const flag = -1 + 2 * Math.random();
+    const payload = -1 + 2 * Math.random();
+    data.push({x: flag, y: payload, label: payload});
+  }
   trainData = data;
   testData = data;
   heatMap.updatePoints(trainData);
