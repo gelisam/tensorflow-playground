@@ -1267,6 +1267,10 @@ footer .logo {
   width: 620px;
 }
 
+.landscape.column.collapsed .content-wrapper {
+  width: 0px;
+}
+
 .landscape.column .section-content {
   width: 600px;
   display: flex;

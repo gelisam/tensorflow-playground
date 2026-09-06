@@ -56,6 +56,6 @@ And the code behind it. We don't need "range" functions, nor the code for "safe 
 
 Don't generate the points of the dataset randomly, put the points on a grid.
 
-## [ ] Fix the LANDSCAPE fold button
+## [x] Fix the LANDSCAPE fold button
 
 Clicking on it toggles the triangle but doesn't fold the contents of the panel.
