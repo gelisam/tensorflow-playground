@@ -1145,12 +1145,14 @@ function generateData() {
  * Assumes Math.random has already been seeded.
  */
 function generateDataPointsOnly() {
-  let numSamples = 128;
-  let data: Example2D[] = [];
-  for (let i = 0; i < numSamples; i++) {
-    const flag = -1 + 2 * Math.random();
-    const payload = -1 + 2 * Math.random();
-    data.push({x: flag, y: payload, label: payload});
+  const values = [-1, -0.5, 0, 0.5, 1];
+  const data: Example2D[] = [];
+  for (let i = 0; i < values.length; i++) {
+    for (let j = 0; j < values.length; j++) {
+      const flag = values[i];
+      const payload = values[j];
+      data.push({x: flag, y: payload, label: payload});
+    }
   }
   trainData = data;
   testData = data;
