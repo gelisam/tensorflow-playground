@@ -2,8 +2,6 @@
 
 This project is a tiny experimental playground for testing the part of singular learning theory that suggests we may be able to control which algorithm a model learns by carefully choosing its data.
 
-The experiment uses a very small neural network and visualizes how the learned function changes as the training data shapes the model.
-
 ## Build instructions
 
 To run the project locally, run:
