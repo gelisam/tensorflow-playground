@@ -439,15 +439,6 @@ function makeGUI() {
   });
 
 
-  let safetySlider = d3.select("#safetySlider").on("input", function() {
-    state.safetyImportance = +this.value / 100;
-    d3.select("#safetyValue").text(this.value + "%");
-    state.serialize();
-    userHasInteracted();
-  });
-  safetySlider.property("value", state.safetyImportance * 100);
-  d3.select("#safetyValue").text(formatNumber(state.safetyImportance * 100) + "%");
-
   // Add scale to the gradient color map.
   let x = d3.scale.linear().domain([-1, 1]).range([0, 144]);
   let xAxis = d3.svg.axis()
@@ -1128,7 +1119,7 @@ function oneStep(): void {
     nn.backPropRanges(network, [-1, -1], nn.Errors.SQUARE);
 
     // Update weights
-    nn.updateWeights(network, state.learningRate, state.safetyImportance);
+    nn.updateWeights(network, state.learningRate, 0);
   }
 
   // Compute the loss.
