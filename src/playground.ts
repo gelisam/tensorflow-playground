@@ -325,8 +325,8 @@ let recentTrainLosses: number[] = [];
 const LEARNING_RATES = [10, 3, 1, 0.3, 0.1, 0.03, 0.01, 0.003, 0.001, 0.0001, 0.00001];
 
 function enableFeaturesForDataset() {
-  // Default toy-model configuration: two inputs, two ReLUs, one linear output.
-  state.networkShape = [2, 2];
+  // Default toy-model configuration: two inputs, one ReLU layer with two neurons, one linear output.
+  state.networkShape = [2];
   state.numHiddenLayers = state.networkShape.length;
 }
 
@@ -500,7 +500,7 @@ function updateWeightsUI(network: nn.Node[][], container) {
 let isHovercardBeingEdited = false;
 
 function drawNode(cx: number, cy: number, nodeId: string, isInput: boolean,
-    container, node?: nn.Node) {
+    container, node?: nn.Node, showCanvas = true) {
   let x = cx - RECT_SIZE / 2;
   let y = cy - RECT_SIZE / 2;
 
@@ -573,6 +573,10 @@ function drawNode(cx: number, cy: number, nodeId: string, isInput: boolean,
       });
   }
 
+  if (!showCanvas) {
+    return nodeGroup;
+  }
+
   // Draw the node's canvas.
   let div = d3.select("#network").insert("div", ":first-child")
     .attr({
@@ -604,7 +608,7 @@ function drawNode(cx: number, cy: number, nodeId: string, isInput: boolean,
   let nodeHeatMap = new HeatMap(RECT_SIZE, DENSITY / 10, xDomain,
       xDomain, div, {noSvg: true});
   div.datum({heatmap: nodeHeatMap, id: nodeId});
-
+  return nodeGroup;
 }
 
 // Draw network
@@ -708,6 +712,7 @@ function drawNetwork(network: nn.Node[][]): void {
   let node = network[numLayers - 1][0];
   let cy = nodeIndexScale(0) + RECT_SIZE / 2 + 30;
   node2coord[node.id] = {cx, cy};
+  drawNode(cx, cy, node.id, false, container, node, false);
   // Draw links.
   for (let i = 0; i < node.inputLinks.length; i++) {
     let link = node.inputLinks[i];
@@ -986,6 +991,7 @@ function updateUI(firstStep = false) {
   d3.select("#iter-number").text(addCommas(zeroPad(iter)));
   updateCodeDisplay(); // Update code display whenever UI refreshes
   drawPayloadOutputChart();
+  drawLossLandscape();
 
   lineChart.addDataPoint([lossTrain]); // Only add training loss
 }
@@ -1224,4 +1230,164 @@ function toggleSection(selector: string, stateKey: string) {
   } else {
     collapseButton.style('transform', 'rotate(90deg)');
   }
+}
+
+function drawLossLandscape() {
+  const container = d3.select("#loss-landscape");
+  container.selectAll("*").remove();
+
+  const paramEntries: Array<{label: string, getter: () => number, setter: (value: number) => void}> = [];
+
+  for (let i = 0; i < network[1].length; i++) {
+    const node = network[1][i];
+    for (let j = 0; j < node.inputLinks.length; j++) {
+      const link = node.inputLinks[j];
+      paramEntries.push({
+        label: `h${i}.w${j}`,
+        getter: () => link.weight,
+        setter: (value: number) => { link.weight = value; }
+      });
+    }
+    paramEntries.push({
+      label: `h${i}.b`,
+      getter: () => node.bias,
+      setter: (value: number) => { node.bias = value; }
+    });
+  }
+
+  const outputNode = network[network.length - 1][0];
+  for (let i = 0; i < outputNode.inputLinks.length; i++) {
+    const link = outputNode.inputLinks[i];
+    paramEntries.push({
+      label: `out.w${i}`,
+      getter: () => link.weight,
+      setter: (value: number) => { link.weight = value; }
+    });
+  }
+  paramEntries.push({
+    label: "out.b",
+    getter: () => outputNode.bias,
+    setter: (value: number) => { outputNode.bias = value; }
+  });
+
+  const chartWidth = 180;
+  const chartHeight = 80;
+  const margin = {top: 8, right: 8, bottom: 18, left: 24};
+
+  paramEntries.forEach((entry, index) => {
+    const svg = container.append("svg")
+      .attr("width", chartWidth)
+      .attr("height", chartHeight);
+
+    const xScale = d3.scale.linear().domain([-2, 2]).range([margin.left, chartWidth - margin.right]);
+    const yMin = Math.min(0, lossTrain * 0.8);
+    const yMax = Math.max(0.5, lossTrain * 1.5, 0.5);
+    const yScale = d3.scale.linear().domain([yMin, yMax]).range([chartHeight - margin.bottom, margin.top]);
+
+    const currentValue = entry.getter();
+    const lineData: {x: number, y: number}[] = [];
+    for (let x = currentValue - 2; x <= currentValue + 2; x += 0.1) {
+      entry.setter(x);
+      lineData.push({x, y: getLoss(network, trainData)});
+    }
+    entry.setter(currentValue);
+
+    const line = d3.svg.line<{x: number, y: number}>()
+      .x(d => xScale(d.x))
+      .y(d => yScale(d.y));
+
+    svg.append("path")
+      .datum(lineData)
+      .attr("d", line)
+      .attr("fill", "none")
+      .attr("stroke", "#0877bd")
+      .attr("stroke-width", 1.5);
+
+    svg.append("g")
+      .attr("transform", `translate(0,${chartHeight - margin.bottom})`)
+      .call(d3.svg.axis().scale(xScale).orient("bottom").ticks(3));
+
+    svg.append("g")
+      .attr("transform", `translate(${margin.left},0)`)
+      .call(d3.svg.axis().scale(yScale).orient("left").ticks(2));
+
+    svg.append("text")
+      .attr("x", chartWidth / 2)
+      .attr("y", chartHeight - 2)
+      .attr("text-anchor", "middle")
+      .style("font-size", "9px")
+      .text(entry.label);
+
+    if (index % 3 === 2) {
+      container.append("br");
+    }
+  });
+}
+
+function drawPayloadOutputChart() {
+  const container = d3.select("#payload-output-chart");
+  container.selectAll("*").remove();
+
+  const width = 240;
+  const height = 160;
+  const margin = {top: 12, right: 12, bottom: 24, left: 28};
+  const svg = container.append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+  const xScale = d3.scale.linear().domain([-2, 2]).range([margin.left, width - margin.right]);
+  const yScale = d3.scale.linear().domain([-2, 2]).range([height - margin.bottom, margin.top]);
+
+  svg.append("g")
+    .attr("transform", `translate(0,${height - margin.bottom})`)
+    .call(d3.svg.axis().scale(xScale).orient("bottom").tickValues([-2, -1, 0, 1, 2]));
+
+  svg.append("g")
+    .attr("transform", `translate(${margin.left},0)`)
+    .call(d3.svg.axis().scale(yScale).orient("left").tickValues([-2, -1, 0, 1, 2]));
+
+  const reference = [{x: -2, y: -2}, {x: 2, y: 2}];
+  const refLine = d3.svg.line<any>()
+    .x(d => xScale(d.x))
+    .y(d => yScale(d.y));
+
+  svg.append("path")
+    .datum(reference)
+    .attr("d", refLine)
+    .attr("fill", "none")
+    .attr("stroke", "#d0d0d0")
+    .attr("stroke-dasharray", "4,4");
+
+  const samples: {x: number, y: number}[] = [];
+  for (let payload = -2; payload <= 2; payload += 0.05) {
+    const input = [0, payload];
+    const outputNode = nn.forwardProp(network, input);
+    samples.push({x: payload, y: outputNode.output});
+  }
+
+  const line = d3.svg.line<any>()
+    .x(d => xScale(d.x))
+    .y(d => yScale(d.y));
+
+  svg.append("path")
+    .datum(samples)
+    .attr("d", line)
+    .attr("fill", "none")
+    .attr("stroke", "#0877bd")
+    .attr("stroke-width", 2);
+
+  svg.append("text")
+    .attr("x", width / 2)
+    .attr("y", height - 4)
+    .attr("text-anchor", "middle")
+    .style("font-size", "10px")
+    .text("payload");
+
+  svg.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("x", -height / 2)
+    .attr("y", 12)
+    .attr("text-anchor", "middle")
+    .style("font-size", "10px")
+    .text("output");
 }
