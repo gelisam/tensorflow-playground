@@ -102,8 +102,8 @@ export class State {
   networkShape: number[] = [2];
   seed: string;
   cooldownActiveUntilIter = 0;
-  instructionsCollapsed = false;
-  aiSafetyCollapsed = false;
+  instructionsCollapsed = true;
+  aiSafetyCollapsed = true;
   featuresCollapsed = false;
   outputCollapsed = false;
   codeCollapsed = false;
