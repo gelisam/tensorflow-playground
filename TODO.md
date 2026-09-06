@@ -36,11 +36,11 @@ Add a section with a bunch of `y = f x` graphs, showing how the loss changes as 
 
 Currently, we can see and edit the bias of every neuron except the output neuron. Let's fix that by adding a small square (like the square which shows the other biases) but no medium square (like the squares where we show the output of each neuron)
 
-## [ ] Move the contents of the WEIGHTS panel to the right
+## [x] Move the contents of the WEIGHTS panel to the right
 
 So that the word "payload" isn't cropped.
 
-## [ ] Put the graphs in a new LANDSCAPE panel
+## [x] Put the graphs in a new LANDSCAPE panel
 
 They are currently to the right of the CODE section, outside of any panel.
 
@@ -48,11 +48,11 @@ They are currently to the right of the CODE section, outside of any panel.
 
 So that the axis numbers aren't cropped. And so that the axis labels, axis numbers, and graph titles aren't on top of each other.
 
-## [ ] Remove the CODE panel and the green rectangle
+## [x] Remove the CODE panel and the green rectangle
 
 And the code behind it. We don't need "range" functions, nor the code for "safe in theory" and "safe in practice".
 
-## [ ] Use an orthogonal dataset
+## [x] Use an orthogonal dataset
 
 Don't generate the points of the dataset randomly, put the points on a grid.
 
