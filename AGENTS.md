@@ -1,2 +1,2 @@
-- When choosing a branch name, please use a prefix which identifies you, the AI agent. For example, Google Jules should use branches which start with `jules/`, GitHub Copilot should use branches which start with `copilot/`, etc.
+- When committing, include a 'Co-authored-by' line identifying you, the agent.
 - Try not to modify `package.json` nor `package-lock.json`. The current dependencies should be more than enough.
