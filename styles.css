@@ -1321,3 +1321,34 @@ footer .logo {
 #learning-rate-values.highlight {
   background-color: yellow;
 }
+
+.landscape.column .content-wrapper {
+  width: 520px;
+}
+
+.landscape.column .section-content {
+  width: 500px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  padding-top: 10px;
+}
+
+.landscape.column .loss-landscape,
+.landscape.column .payload-output-chart {
+  display: flex;
+  justify-content: center;
+}
+
+.landscape.column #loss-landscape {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.landscape.column #payload-output-chart {
+  width: 100%;
+  margin-top: 6px;
+}

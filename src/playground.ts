@@ -1189,6 +1189,7 @@ function initCollapsibleSections() {
     { selector: '.ai-safety.column', stateKey: 'aiSafetyCollapsed' },
     { selector: '.features.column', stateKey: 'featuresCollapsed' },
     { selector: '.output.column', stateKey: 'outputCollapsed' },
+    { selector: '.landscape.column', stateKey: 'landscapeCollapsed' },
     { selector: '.code.column', stateKey: 'codeCollapsed' }
   ];
 
