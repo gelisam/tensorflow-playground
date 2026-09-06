@@ -94,8 +94,7 @@ export class State {
     {name: "aiSafetyCollapsed", type: Type.BOOLEAN},
     {name: "featuresCollapsed", type: Type.BOOLEAN},
     {name: "outputCollapsed", type: Type.BOOLEAN},
-    {name: "landscapeCollapsed", type: Type.BOOLEAN},
-    {name: "codeCollapsed", type: Type.BOOLEAN}
+    {name: "landscapeCollapsed", type: Type.BOOLEAN}
   ];
 
   [key: string]: any;
@@ -108,7 +107,6 @@ export class State {
   featuresCollapsed = false;
   outputCollapsed = false;
   landscapeCollapsed = false;
-  codeCollapsed = false;
 
   /**
    * Deserializes the state from the url hash.

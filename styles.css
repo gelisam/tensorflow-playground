@@ -1221,82 +1221,23 @@ footer .logo {
 }
 
 #practice-safety-container {
-  /* Ensure this container allows absolute positioning of its children */
-  position: relative;
-  height: 30px; /* Adjust as needed based on content */
-  margin-top: 5px; /* Space below training loss */
-  margin-bottom: 5px; /* Space above heatmap */
-  display: -webkit-box;
-  display: -moz-box;
-  display: -ms-flexbox;
-  display: -webkit-flex;
-  display: flex; /* Use flex to center content if needed */
-  align-items: end; /* Center the box vertically */
-}
-
-#practice-safety-box {
-  padding: 0px 5px;
-  height: 23px;
-  display: -webkit-box;
-  display: -moz-box;
-  display: -ms-flexbox;
-  display: -webkit-flex;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 130px;
-  background-color: #e0e0e0;
+  display: none;
 }
 
 #theory-safety-box {
-  position: absolute;
-  box-sizing: border-box;
-  padding: 0px 5px;
-  height: 23px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: none;
 }
 
-#theory-safety-box.safe {
-  border: 3px solid green;
-}
-
-#theory-safety-box.unsafe {
-  border: 3px solid red;
+#practice-safety-box {
+  display: none;
 }
 
 #practice-safety-text {
-  font-size: 13px;
-  text-align: center;
-  white-space: nowrap;
+  display: none;
 }
 
 #theory-safety-text {
-  position: absolute;
-  top: -25px;
-  left: 0px;
-  width: 100%;
-  font-size: 13px;
-  text-align: center;
-  white-space: nowrap;
-  background-color: #e0e0e0;
-}
-
-#practice-safety-text.safe {
-  color: green;
-}
-
-#theory-safety-text.safe {
-  color: green;
-}
-
-#practice-safety-text.unsafe {
-  color: red;
-}
-
-#theory-safety-text.unsafe {
-  color: red;
+  display: none;
 }
 
 .value-container {
@@ -1323,32 +1264,35 @@ footer .logo {
 }
 
 .landscape.column .content-wrapper {
-  width: 520px;
+  width: 620px;
 }
 
 .landscape.column .section-content {
-  width: 500px;
+  width: 600px;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-  padding-top: 10px;
-}
-
-.landscape.column .loss-landscape,
-.landscape.column .payload-output-chart {
-  display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 8px 12px;
 }
 
 .landscape.column #loss-landscape {
   width: 100%;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  justify-content: center;
+  gap: 16px 14px;
+}
+
+.landscape.column #loss-landscape svg,
+.landscape.column #payload-output-chart svg {
+  display: block;
+  margin: 0 auto;
 }
 
 .landscape.column #payload-output-chart {
   width: 100%;
-  margin-top: 6px;
+  display: flex;
+  justify-content: center;
+  padding-bottom: 4px;
 }
