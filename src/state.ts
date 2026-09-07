@@ -104,8 +104,8 @@ export class State {
   cooldownActiveUntilIter = 0;
   instructionsCollapsed = true;
   aiSafetyCollapsed = true;
-  featuresCollapsed = false;
-  outputCollapsed = false;
+  featuresCollapsed = true;
+  outputCollapsed = true;
   landscapeCollapsed = false;
 
   /**
