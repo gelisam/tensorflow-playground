@@ -1,5 +1,3 @@
 node_modules/
 dist/
 .playwright-mcp/
-landscape-before.png
-landscape-after.png
