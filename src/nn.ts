@@ -13,7 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 import {ActivationFunction, Activations} from "./activation";
-import {Range, addRange, multiplyRange, activationRange, BIT_RANGES} from "./range";
 
 /**
  * A node in a neural network. Each node has a state
@@ -32,30 +31,18 @@ export class Node {
 
   /** The sum of the inputs * weights + bias. */
   preActivation: number;
-  /** Range of possible values for the sum of the inputs * weights + bias. */
-  preActivationRange: Range;
 
   /** relu(preActivation), or whatever is the activation function */
   output: number;
-  /** Range of possible values for relu(preActivationRange), or whatever is the activation function. */
-  outputRange: Range;
 
   /** To minimize the squared error, we would like to change the output in this direction. */
   desiredDeltaOutput: number;
-  /** To minimize the squared error on safety-in-theory, we would like to change
-   * each component of 'outputRange' in this direction.
-   */
-  desiredDeltaOutputComponents: [number, number];
 
   /** Sum of 'desiredDeltaPreActivation' for many samples. */
   accDesiredDeltaPreActivation = 0;
-  /** Component-wise sum of 'desiredDeltaPreActivationComponents' for many samples. */
-  accDesiredDeltaPreActivationComponents: [number, number] = [0, 0];
 
   /** Number of samples that have contributed to 'accDesiredDeltaPreActivation'. */
   numDesiredDeltaPreActivations = 0;
-  /** Number of samples that have contributed to 'accDesiredDeltaPreActivationComponents'. */
-  numDesiredDeltaPreActivationComponents = 0;
 
   /**
    * Creates a new node with the provided id and activation function.
@@ -112,20 +99,12 @@ export class Link {
 
   /** To minimize the squared error, we would like to change the input in this direction. */
   desiredDeltaInput: number;
-  /** To minimize the squared error on safety-in-theory, we would like to change
-   * each component of the input range in this direction.
-   */
-  desiredDeltaInputComponents: [number, number];
 
   /** Sum of 'desiredDeltaWeight' for many downstream nodes and many samples. */
   accDesiredDeltaWeight = 0;
-  /** Component-wise sum of 'desiredDeltaWeightComponents' for many downstream nodes and many samples. */
-  accDesiredDeltaWeightComponents: [number, number] = [0, 0];
 
   /** Number of samples that have contributed to 'accDesiredDeltaWeight'. */
   numDesiredDeltaWeights = 0;
-  /** Number of samples that have contributed to 'accDesiredDeltaWeightComponents'. */
-  numDesiredDeltaWeightComponents = 0;
 
   /**
    * Constructs a link in the neural network initialized with random weight.
@@ -286,112 +265,6 @@ export function backProp(network: Node[][], target: number,
   }
 }
 
-export function backPropRanges(network: Node[][], target: Range,
-    errorFunc: ErrorFunction): void {
-  // The output node is a special case. We use the user-defined error
-  // function for the derivative.
-  const outputNode = network[network.length - 1][0];
-  // const outputValue = outputNode.output;
-  // const desiredDeltaSquaredError = -1;
-  // const squaredErrorWrtOutput = errorFunc.der(outputValue, target);
-  // outputNode.desiredDeltaOutput = desiredDeltaSquaredError * squaredErrorWrtOutput;
-  const outputComponent0 = outputNode.outputRange[0];
-  const outputComponent1 = outputNode.outputRange[1];
-  const desiredDeltaSquaredError = -1; // We want to reduce the error.
-  const squaredErrorWrtOutputComponent0 = errorFunc.der(outputComponent0, target[0]);
-  const squaredErrorWrtOutputComponent1 = errorFunc.der(outputComponent1, target[1]);
-  const desiredDeltaOutputComponent0 = desiredDeltaSquaredError * squaredErrorWrtOutputComponent0;
-  const desiredDeltaOutputComponent1 = desiredDeltaSquaredError * squaredErrorWrtOutputComponent1;
-  outputNode.desiredDeltaOutputComponents = [desiredDeltaOutputComponent0, desiredDeltaOutputComponent1];
-
-  // Go through the layers backwards.
-  for (let layerIdx = network.length - 1; layerIdx >= 1; layerIdx--) {
-    const currentLayer = network[layerIdx];
-    // At this point we know how much we want to change the output of each node
-    // in this layer. Use it to calculate how much we want to change the
-    // pre-activation of each node.
-    for (let i = 0; i < currentLayer.length; i++) {
-      const node = currentLayer[i];
-      // const outputWrtPreActivation = node.activation.der(node.preActivation);
-      // const desiredDeltaPreActivation = node.desiredDeltaOutput * outputWrtPreActivation;
-      // node.accDesiredDeltaPreActivation += desiredDeltaPreActivation;
-      // node.numDesiredDeltaPreActivations++;
-      const outputWrtPreActivation0 = node.activation.der(node.preActivationRange[0]);
-      const outputWrtPreActivation1 = node.activation.der(node.preActivationRange[1]);
-      const desiredDeltaPreActivation0 = node.desiredDeltaOutputComponents[0] * outputWrtPreActivation0;
-      const desiredDeltaPreActivation1 = node.desiredDeltaOutputComponents[1] * outputWrtPreActivation1;
-      const accDesiredPreActivation0 = node.accDesiredDeltaPreActivationComponents[0] + desiredDeltaPreActivation0;
-      const accDesiredPreActivation1 = node.accDesiredDeltaPreActivationComponents[1] + desiredDeltaPreActivation1;
-      node.accDesiredDeltaPreActivationComponents = [accDesiredPreActivation0, accDesiredPreActivation1];
-      node.numDesiredDeltaPreActivationComponents++;
-
-      // Now that we know how much we want to change the pre-activation the node,
-      // we can calculate how much we want to change each weight and each input.
-      for (let j = 0; j < node.inputLinks.length; j++) {
-        const link = node.inputLinks[j];
-        if (link.isDead) {
-          continue;
-        }
-        // const input = link.source.output;
-        // const desiredDeltaContribution = desiredDeltaPreActivation;
-        // const contributionWrtWeight = input;
-        // const contributionWrtInput = link.weight;
-        // const desiredDeltaWeight = desiredDeltaContribution * contributionWrtWeight;
-        // link.desiredDeltaInput = desiredDeltaContribution * contributionWrtInput;
-        // link.accDesiredDeltaWeight += desiredDeltaWeight;
-        // link.numDesiredDeltaWeights++;
-        const input0 = link.source.outputRange[0];
-        const input1 = link.source.outputRange[1];
-        const desiredDeltaContribution0 = desiredDeltaPreActivation0;
-        const desiredDeltaContribution1 = desiredDeltaPreActivation1;
-        const contributionWrtWeight0 = input0;
-        const contributionWrtWeight1 = input1;
-        const contributionWrtInput = link.weight;
-        if (link.weight > 0) {
-          const desiredDeltaWeight0 = desiredDeltaContribution0 * contributionWrtWeight0;
-          const desiredDeltaWeight1 = desiredDeltaContribution1 * contributionWrtWeight1;
-          const desiredDeltaInput0 = desiredDeltaContribution0 * contributionWrtInput;
-          const desiredDeltaInput1 = desiredDeltaContribution1 * contributionWrtInput;
-          link.desiredDeltaInputComponents = [desiredDeltaInput0, desiredDeltaInput1];
-          link.accDesiredDeltaWeightComponents[0] += desiredDeltaWeight0;
-          link.accDesiredDeltaWeightComponents[1] += desiredDeltaWeight1;
-          link.numDesiredDeltaWeightComponents++;
-        } else {
-          // the weight is negative, so min and max swap roles:
-          //   -1 * [-2, -1] = [1, 2]
-          // if we want to increase the upper bound 2 of the output, that means
-          // we need to _decrease_ the _lower_ bound -2 of the input.
-          const desiredDeltaWeight0 = desiredDeltaContribution1/*!*/ * contributionWrtWeight0;
-          const desiredDeltaWeight1 = desiredDeltaContribution0/*!*/ * contributionWrtWeight1;
-          const desiredDeltaInput0 = desiredDeltaContribution1/*!*/ * contributionWrtInput;
-          const desiredDeltaInput1 = desiredDeltaContribution0/*!*/ * contributionWrtInput;
-          link.desiredDeltaInputComponents = [desiredDeltaInput0, desiredDeltaInput1];
-          link.accDesiredDeltaWeightComponents[0] += desiredDeltaWeight0;
-          link.accDesiredDeltaWeightComponents[1] += desiredDeltaWeight1;
-          link.numDesiredDeltaWeightComponents++;
-        }
-      }
-    }
-    if (layerIdx === 1) {
-      continue;
-    }
-    const prevLayer = network[layerIdx - 1];
-    for (let i = 0; i < prevLayer.length; i++) {
-      const node = prevLayer[i];
-      // Sum up the desired delta inputs from all downstream links in order to
-      // compute this node's desired delta output.
-      // node.desiredDeltaOutput = 0;
-      node.desiredDeltaOutputComponents = [0, 0];
-      for (let j = 0; j < node.outputLinks.length; j++) {
-        const downstreamLink = node.outputLinks[j];
-        // node.desiredDeltaOutput += downstreamLink.desiredDeltaInput;
-        node.desiredDeltaOutputComponents[0] += downstreamLink.desiredDeltaInputComponents[0];
-        node.desiredDeltaOutputComponents[1] += downstreamLink.desiredDeltaInputComponents[1];
-      }
-    }
-  }
-}
-
 function safeDivide(numerator: number, denominator: number): number {
   if (denominator === 0) {
     return 0;
@@ -402,8 +275,7 @@ function safeDivide(numerator: number, denominator: number): number {
 /**
  * Update the weights of the network using the accumulated desired deltas.
  */
-export function updateWeights(network: Node[][], learningRate: number,
-    safetyImportance: number) {
+export function updateWeights(network: Node[][], learningRate: number) {
   for (let layerIdx = 1; layerIdx < network.length; layerIdx++) {
     let currentLayer = network[layerIdx];
     for (let i = 0; i < currentLayer.length; i++) {
@@ -413,19 +285,11 @@ export function updateWeights(network: Node[][], learningRate: number,
       const numDesiredDeltaBias = node.numDesiredDeltaPreActivations;
       const practicalDesiredDeltaBias = safeDivide(accDesiredDeltaBias, numDesiredDeltaBias);
 
-      const accDesiredDeltaBias0 = node.accDesiredDeltaPreActivationComponents[0];
-      const accDesiredDeltaBias1 = node.accDesiredDeltaPreActivationComponents[1];
-      const desiredDeltaBias0 = safeDivide(accDesiredDeltaBias0, node.numDesiredDeltaPreActivationComponents);
-      const desiredDeltaBias1 = safeDivide(accDesiredDeltaBias1, node.numDesiredDeltaPreActivationComponents);
-      const safetyDesiredDeltaBias = desiredDeltaBias0 + desiredDeltaBias1; // divide by 2?
-
-      const totalDesiredDeltaBias = (1 - safetyImportance) * practicalDesiredDeltaBias + safetyImportance * safetyDesiredDeltaBias;
+      const totalDesiredDeltaBias = practicalDesiredDeltaBias;
       node.bias += learningRate * totalDesiredDeltaBias;
 
       node.accDesiredDeltaPreActivation = 0;
       node.numDesiredDeltaPreActivations = 0;
-      node.accDesiredDeltaPreActivationComponents = [0, 0];
-      node.numDesiredDeltaPreActivationComponents = 0;
 
       // Update the weights coming into this node.
       for (let j = 0; j < node.inputLinks.length; j++) {
@@ -436,17 +300,11 @@ export function updateWeights(network: Node[][], learningRate: number,
 
         const practicalDesiredDeltaWeight = safeDivide(link.accDesiredDeltaWeight, link.numDesiredDeltaWeights);
 
-        const theoryDesiredDeltaWeight0 = safeDivide(link.accDesiredDeltaWeightComponents[0], link.numDesiredDeltaWeightComponents);
-        const theoryDesiredDeltaWeight1 = safeDivide(link.accDesiredDeltaWeightComponents[1], link.numDesiredDeltaWeightComponents);
-        const safetyDesiredDeltaWeight = theoryDesiredDeltaWeight0 + theoryDesiredDeltaWeight1; // divide by 2?
-
-        const totalDesiredDeltaWeight = (1 - safetyImportance) * practicalDesiredDeltaWeight + safetyImportance * safetyDesiredDeltaWeight;
+        const totalDesiredDeltaWeight = practicalDesiredDeltaWeight;
         link.weight += learningRate * totalDesiredDeltaWeight;
 
         link.accDesiredDeltaWeight = 0;
         link.numDesiredDeltaWeights = 0;
-        link.accDesiredDeltaWeightComponents = [0, 0];
-        link.numDesiredDeltaWeightComponents = 0;
       }
     }
   }
@@ -471,37 +329,3 @@ export function getOutputNode(network: Node[][]) {
   return network[network.length - 1][0];
 }
 
-/**
- * Updates the ranges of all nodes in the network.
- *
- * @param network The neural network.
- * @param activationFunction The activation function used in the network.
- * @param inputRanges A map from input node id to its range.
- */
-export function forwardPropRanges(network: Node[][],
-    inputRanges: Map<string, Range>): void {
-  // Set the initial ranges in the input layer.
-  let inputLayer = network[0];
-  for (let i = 0; i < inputLayer.length; i++) {
-    let node = inputLayer[i];
-    node.outputRange = inputRanges.get(node.id) || [0.0, 1.0];
-  }
-
-  // Propagate the ranges for hidden and output layers.
-  for (let layerIdx = 1; layerIdx < network.length; layerIdx++) {
-    let currentLayer = network[layerIdx];
-    for (let i = 0; i < currentLayer.length; i++) {
-      let node = currentLayer[i];
-      let currentRange: Range = [node.bias, node.bias];
-
-      for (let j = 0; j < node.inputLinks.length; j++) {
-        let link = node.inputLinks[j];
-        let inputNode = link.source;
-        let weightedRange = multiplyRange(link.weight, inputNode.outputRange);
-        currentRange = addRange(currentRange, weightedRange);
-      }
-      node.preActivationRange = currentRange;
-      node.outputRange = activationRange(node.activation, currentRange);
-    }
-  }
-}

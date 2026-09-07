@@ -15,7 +15,6 @@ limitations under the License.
 
 import * as nn from "./nn";
 import { Activations } from "./activation";
-import { BIT_RANGES } from "./range";
 import {HeatMap, reduceMatrix} from "./heatmap";
 import {
   State,
@@ -39,176 +38,6 @@ function formatNumber(num: number): string {
     }
     return fixed;
 }
-
-export function generateNetworkCode(network: nn.Node[][], state: State): string {
-    if (!network || network.length === 0) return "";
-
-    let codeLines: string[] = [];
-    let nodeIdToVarName: {[key: string]: string} = {};
-
-    // Populate nodeIdToVarName and add input ranges
-    const inputLayer = network[0];
-    for (let j = 0; j < inputLayer.length; j++) {
-        const node = inputLayer[j];
-        nodeIdToVarName[node.id] = node.id; // e.g. bit0
-        if (node.outputRange) {
-            codeLines.push(`[${formatNumber(node.outputRange[0])}, ${formatNumber(node.outputRange[1])}] ∋ ${node.id}`);
-        }
-    }
-    if (inputLayer.length > 0) {
-        codeLines.push(""); // Add a blank line after input ranges
-    }
-
-    for (let i = 1; i < network.length; i++) { // Start from the first hidden layer
-        let layer = network[i];
-        for (let j = 0; j < layer.length; j++) {
-            const node = layer[j];
-            let varName: string;
-            if (i === network.length - 1) { // Output layer
-                varName = "out";
-            } else { // Hidden layer
-                const layerIndex = i - 1;
-                const nodeIndex = j;
-                varName = `x${layerIndex}${nodeIndex}`;
-            }
-            nodeIdToVarName[node.id] = varName;
-        }
-    }
-
-
-    for (let i=1; i<network.length; i++) {
-      if (i === network.length - 1) { // Output layer
-        codeLines.push(""); // Add an extra blank line before the output layer
-      }
-
-      let layer = network[i];
-      for (let j=0; j<layer.length; j++) {
-        const node = layer[j];
-        const targetName = nodeIdToVarName[node.id];
-        const allTermsArray: string[] = [];
-
-        // Add range string for the current node
-        if (node.outputRange) {
-          const rangeString = `[${formatNumber(node.outputRange[0])}, ${formatNumber(node.outputRange[1])}] ∋ ${targetName}`;
-          if (i === network.length - 1) { // Output layer
-            allTermsArray.push(`<span id='output-node-range-and-var-text'>${rangeString}</span>`);
-          } else {
-            allTermsArray.push(rangeString);
-          }
-        } else {
-          allTermsArray.push(targetName);
-        }
-        allTermsArray.push(`=`);
-
-        const termsArray: string[] = [];
-        let firstTerm = true;
-        for (let k=0; k<node.inputLinks.length; k++) {
-          const link = node.inputLinks[k];
-
-          // Omitting terms of the form "0.0 * x"
-          if (Math.abs(link.weight) < 0.001) continue;
-
-          const sourceName = nodeIdToVarName[link.source.id];
-          const weight = link.weight;
-
-          // Omitting 1.0 coefficients
-          if (Math.abs(weight - 1.0) < 0.001) {
-            if (weight > 0) {
-              if (firstTerm) {
-                // x10 = x00
-                termsArray.push(sourceName);
-                firstTerm = false;
-              } else {
-                // x10 = ... + x00
-                termsArray.push("+");
-                termsArray.push(sourceName);
-              }
-            } else {
-              if (firstTerm) {
-                // x10 = -x00
-                termsArray.push(`-${sourceName}`);
-                firstTerm = false;
-              } else {
-                // x10 = ... - x00
-                termsArray.push("-");
-                termsArray.push(sourceName);
-              }
-            }
-          } else {
-            if (weight > 0) {
-              if (firstTerm) {
-                // x10 = 0.5 * x00
-                termsArray.push(formatNumber(weight));
-                termsArray.push("*");
-                termsArray.push(sourceName);
-                firstTerm = false;
-              } else {
-                // x10 = ... + 0.5 * x00
-                termsArray.push("+");
-                termsArray.push(formatNumber(weight));
-                termsArray.push("*");
-                termsArray.push(sourceName);
-              }
-            } else {
-              if (firstTerm) {
-                // x10 = -0.5 * x00
-                termsArray.push(formatNumber(weight));
-                termsArray.push("*");
-                termsArray.push(sourceName);
-                firstTerm = false;
-              } else {
-                // x10 = ... - 0.5 * x00
-                termsArray.push("-");
-                termsArray.push(formatNumber(Math.abs(weight)));
-                termsArray.push("*");
-                termsArray.push(sourceName);
-              }
-            }
-          }
-        }
-
-        // Bias term
-        if (Math.abs(node.bias) >= 0.001) {
-          if (node.bias > 0.0) {
-            if (firstTerm) {
-              // x10 = 0.5
-              termsArray.push(formatNumber(node.bias));
-              firstTerm = false;
-            } else {
-              // x10 = ... + 0.5
-              termsArray.push("+");
-              termsArray.push(formatNumber(node.bias));
-            }
-          } else {
-            if (firstTerm) {
-              // x10 = -0.5
-              termsArray.push(formatNumber(node.bias));
-              firstTerm = false;
-            } else {
-              // x10 = ... - 0.5
-              termsArray.push("-");
-              termsArray.push(formatNumber(Math.abs(node.bias)));
-            }
-          }
-        }
-
-        let joinedTerms = termsArray.join(" ");
-        // If no terms were added (all weights zero, bias zero), represent as relu(0.0)
-        if (firstTerm) {
-          joinedTerms = "0.0";
-        }
-
-        allTermsArray.push(`${node.activation.name}(${joinedTerms})`);
-        codeLines.push(allTermsArray.join(" "));
-      }
-      if (i < network.length - 1) {
-        codeLines.push(""); // Blank line after each layer
-      }
-    }
-    return codeLines.join("\n");
-}
-
-let mainWidth;
 
 const RECT_SIZE = 30;
 const BIAS_SIZE = 5;
@@ -328,20 +157,6 @@ function enableFeaturesForDataset() {
   // Default toy-model configuration: two inputs, one ReLU layer with two neurons, one linear output.
   state.networkShape = [2];
   state.numHiddenLayers = state.networkShape.length;
-}
-
-function updateCodeDisplay() {
-  const codeDisplayElement = document.getElementById("code-display");
-  if (codeDisplayElement) {
-    // Ensure 'network' and 'state' are the currently updated instances
-    // These are typically available in the global scope of playground.ts or passed around
-    const codeString = generateNetworkCode(network, state);
-    codeDisplayElement.innerHTML = codeString; // Use innerHTML to parse spans
-  } else {
-    // console.warn("code-display element not found");
-    // Warning: element might not be ready in very early stages or if HTML changes.
-    // For this specific project, it should generally be available once UI is built.
-  }
 }
 
 function updateLearningRateDisplay(newRate: number, highlight = true) {
@@ -801,7 +616,6 @@ function updateHoverCard(type: HoverType, nodeOrLink?: nn.Node | nn.Link,
         } else {
           (nodeOrLink as nn.Node).bias = +this.value;
         }
-        nn.forwardPropRanges(network, BIT_RANGES);
         updateUI();
       }
     });
@@ -989,7 +803,6 @@ function updateUI(firstStep = false) {
   d3.select("#loss-train").text(humanReadable(lossTrain));
   // d3.select("#loss-test").text(humanReadable(lossTest)); // Removed
   d3.select("#iter-number").text(addCommas(zeroPad(iter)));
-  updateCodeDisplay(); // Update code display whenever UI refreshes
   drawPayloadOutputChart();
   drawLossLandscape();
 
@@ -1038,12 +851,8 @@ function oneStep(): void {
       nn.backProp(network, point.label, nn.Errors.SQUARE);
     });
 
-    // Theory propagation
-    nn.forwardPropRanges(network, BIT_RANGES);
-    nn.backPropRanges(network, [-1, -1], nn.Errors.SQUARE);
-
     // Update weights
-    nn.updateWeights(network, state.learningRate, 0);
+    nn.updateWeights(network, state.learningRate);
   }
 
   // Compute the loss.
@@ -1051,8 +860,6 @@ function oneStep(): void {
   lossTest = getLoss(network, testData);
   updateLearningRate(lossTrain);
 
-  // Update the ranges one last time to match the updated weights.
-  nn.forwardPropRanges(network, BIT_RANGES);
   updateUI();
 }
 
@@ -1120,8 +927,6 @@ function reset(onStartup=false, hardcodeWeightsOption?:boolean) { // hardcodeWei
   lossTrain = getLoss(network, trainData);
   lossTest = getLoss(network, testData);
   updateLearningRate(lossTrain);
-  // Update node ranges after network initialization or weight hardcoding
-  nn.forwardPropRanges(network, BIT_RANGES);
   drawNetwork(network);
   updateUI(true);
   updateSeedDisplay(); // Ensure seed display is current
