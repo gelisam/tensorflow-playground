@@ -1307,10 +1307,12 @@ function drawLossLandscape() {
       .attr("stroke-width", 1.5);
 
     svg.append("g")
+      .attr("class", "x axis")
       .attr("transform", `translate(0,${chartHeight - margin.bottom})`)
       .call(d3.svg.axis().scale(xScale).orient("bottom").ticks(3));
 
     svg.append("g")
+      .attr("class", "y axis")
       .attr("transform", `translate(${margin.left},0)`)
       .call(d3.svg.axis().scale(yScale).orient("left").ticks(2));
 
@@ -1342,10 +1344,12 @@ function drawPayloadOutputChart() {
   const yScale = d3.scale.linear().domain([-2, 2]).range([height - margin.bottom, margin.top]);
 
   svg.append("g")
+    .attr("class", "x axis")
     .attr("transform", `translate(0,${height - margin.bottom})`)
     .call(d3.svg.axis().scale(xScale).orient("bottom").tickValues([-2, -1, 0, 1, 2]));
 
   svg.append("g")
+    .attr("class", "y axis")
     .attr("transform", `translate(${margin.left},0)`)
     .call(d3.svg.axis().scale(yScale).orient("left").tickValues([-2, -1, 0, 1, 2]));
 

@@ -60,7 +60,7 @@ Don't generate the points of the dataset randomly, put the points on a grid.
 
 Clicking on it toggles the triangle but doesn't fold the contents of the panel.
 
-## [ ] Make the LANDSCAPE axes thiner
+## [x] Make the LANDSCAPE axes thiner
 
 They are extremely thick right now. They should be 1px or 2px max.
 
