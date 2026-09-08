@@ -23,7 +23,7 @@ import {
   // regularizations, // Removed
   getKeyFromValue
 } from "./state";
-import {Example2D, shuffle, xyToBits, classifyParityData, bitlength, DataGenerator} from "./dataset";
+import {Example2D, shuffle, xyToBits, classifyParityData, bitlength, DataGenerator, computeCurriculumLabel} from "./dataset";
 import {AppendingLineChart} from "./linechart";
 import * as d3 from 'd3';
 
@@ -152,6 +152,8 @@ const SEQUENCE_REPEATS = 200;
 let datasetSequence: Example2D[] = [];
 /** Index into datasetSequence of the next epoch to train on. */
 let sequenceIndex = 0;
+/** How far along the current dataset sequence's curriculum we are: -1 at the start, +1 once it's fully consumed. */
+let sequenceProgress = -1;
 let network: nn.Node[][] = null;
 let lossTrain = 0;
 let lossTest = 0;
@@ -287,6 +289,18 @@ function makeGUI() {
 
   // Initial display of the seed
   updateSeedDisplay();
+
+  // Dataset sequence dropdown
+  const datasetSequenceSelect = document.getElementById("datasetSequenceSelect") as HTMLSelectElement;
+  if (datasetSequenceSelect) {
+    datasetSequenceSelect.value = state.datasetSequenceMode;
+    datasetSequenceSelect.addEventListener("change", () => {
+      state.datasetSequenceMode = datasetSequenceSelect.value;
+      state.serialize();
+      userHasInteracted();
+      reset();
+    });
+  }
 }
 
 function updateSeedDisplay() {
@@ -795,6 +809,11 @@ function oneStep(): void {
   let epoch = datasetSequence.slice(sequenceIndex, sequenceIndex + trainData.length);
   sequenceIndex += epoch.length;
 
+  // Advance the curriculum: update every grid point's label to match how far
+  // along the dataset sequence we now are.
+  sequenceProgress = 2 * (sequenceIndex / datasetSequence.length) - 1;
+  updateCurriculumLabels(sequenceProgress);
+
   iter++;
   // The training is done in batches of 10.
   let batchSize = 10;
@@ -836,6 +855,8 @@ function generateDatasetSequence() {
     datasetSequence.push(...epoch);
   }
   sequenceIndex = 0;
+  sequenceProgress = -1;
+  updateCurriculumLabels(sequenceProgress);
   setPlayButtonEnabled(true);
 }
 
@@ -940,11 +961,23 @@ function generateDataPointsOnly() {
     for (let j = 0; j < values.length; j++) {
       const flag = values[i];
       const payload = values[j];
-      data.push({x: flag, y: payload, label: payload});
+      const label = computeCurriculumLabel(state.datasetSequenceMode, sequenceProgress, payload);
+      data.push({x: flag, y: payload, label});
     }
   }
   trainData = data;
   testData = data;
+}
+
+/**
+ * Recomputes every grid point's label using the current dataset sequence's
+ * curriculum, at the given point of progress (-1 at the start of training,
+ * +1 once the sequence has been fully consumed).
+ */
+function updateCurriculumLabels(progress: number) {
+  trainData.forEach(point => {
+    point.label = computeCurriculumLabel(state.datasetSequenceMode, progress, point.y);
+  });
 }
 
 let firstInteraction = true;
@@ -1134,8 +1167,9 @@ function computeFlagCurves(
 }
 
 /**
- * Draws the dashed "output = payload" target line, plus one colored line
- * per flag value, into the given svg using the given scales.
+ * Draws the dashed target line for the current dataset sequence's curriculum
+ * (animated as `sequenceProgress` advances during training), plus one
+ * colored line per flag value, into the given svg using the given scales.
  */
 function drawFlagCurves(svg, xScale, yScale,
     getValue: (flag: number, payload: number) => number, strokeWidth: number) {
@@ -1143,8 +1177,16 @@ function drawFlagCurves(svg, xScale, yScale,
     .x(d => xScale(d.x))
     .y(d => yScale(d.y));
 
+  const targetPoints: {x: number, y: number}[] = [];
+  for (let payload = xDomain[0]; payload <= xDomain[1] + 1e-9; payload += CHART_STEP) {
+    targetPoints.push({
+      x: payload,
+      y: computeCurriculumLabel(state.datasetSequenceMode, sequenceProgress, payload)
+    });
+  }
+
   svg.append("path")
-    .datum([{x: xDomain[0], y: xDomain[0]}, {x: xDomain[1], y: xDomain[1]}])
+    .datum(targetPoints)
     .attr("d", line)
     .attr("fill", "none")
     .attr("stroke", "#d0d0d0")

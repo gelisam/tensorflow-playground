@@ -302,3 +302,81 @@ function dist(a: Point, b: Point): number {
   let dy = a.y - b.y;
   return Math.sqrt(dx * dx + dy * dy);
 }
+
+/**
+ * The "dataset sequence" curricula. Each one describes a family of target
+ * functions parameterized by `progress` (ranging from -1, the start of
+ * training, to +1, the end of training) which always converges to the
+ * identity function `output = payload` exactly at `progress = 1`, so that
+ * the flat/kink boundaries end up right at the edge of the -1..1 training
+ * domain.
+ */
+export type CurriculumMode =
+  "flat-on-left" | "flat-on-right" | "flat-on-both-sides" | "never-flat";
+
+/** Fraction of the way through the curriculum, from 0 (start) to 1 (end). */
+function curriculumFraction(progress: number): number {
+  return (progress + 1) / 2;
+}
+
+/**
+ * Starts as `output = ReLU(payload)` (flat at 0 for payload < 0), then moves
+ * the kink left until it lands just past the domain's left edge (-1), at
+ * which point the function is `output = payload` throughout the domain.
+ */
+function curriculumFlatOnLeft(progress: number, payload: number): number {
+  let kink = -curriculumFraction(progress);
+  return Math.max(0, payload - kink) + kink;
+}
+
+/**
+ * Starts as `output = -ReLU(-payload)` (flat at 0 for payload > 0), then
+ * moves the kink right until it lands just past the domain's right edge (1),
+ * at which point the function is `output = payload` throughout the domain.
+ */
+function curriculumFlatOnRight(progress: number, payload: number): number {
+  let kink = curriculumFraction(progress);
+  return -Math.max(0, kink - payload) + kink;
+}
+
+/**
+ * Starts as the constant `output = 0.0`, then quickly opens up into a
+ * clamped ramp (flat below, ramp in the middle, flat above), moving the
+ * bottom flat part down and the top flat part up until they land just past
+ * the domain's edges (-1 and 1), at which point the function is
+ * `output = payload` throughout the domain.
+ */
+function curriculumFlatOnBothSides(progress: number, payload: number): number {
+  let bound = Math.pow(curriculumFraction(progress), 0.4);
+  return Math.max(-bound, Math.min(bound, payload));
+}
+
+/**
+ * Starts as the constant `output = 0.0` (a flat "dead zone" spanning the
+ * whole domain), then shrinks the width of that flat part down to 0, at
+ * which point the function is `output = payload` throughout the domain.
+ */
+function curriculumNeverFlat(progress: number, payload: number): number {
+  let halfWidth = 1 - curriculumFraction(progress);
+  let magnitude = Math.max(0, Math.abs(payload) - halfWidth);
+  return Math.sign(payload) * magnitude;
+}
+
+const CURRICULUM_FNS:
+    {[mode in CurriculumMode]: (progress: number, payload: number) => number} = {
+  "flat-on-left": curriculumFlatOnLeft,
+  "flat-on-right": curriculumFlatOnRight,
+  "flat-on-both-sides": curriculumFlatOnBothSides,
+  "never-flat": curriculumNeverFlat,
+};
+
+/**
+ * Computes the target label for the given dataset sequence `mode` at the
+ * given `progress` (-1 at the start of training, +1 at the end) and
+ * `payload`.
+ */
+export function computeCurriculumLabel(
+    mode: string, progress: number, payload: number): number {
+  let fn = CURRICULUM_FNS[mode as CurriculumMode] || curriculumFlatOnLeft;
+  return fn(progress, payload);
+}

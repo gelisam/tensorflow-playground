@@ -90,6 +90,7 @@ export class State {
     {name: "learningRate", type: Type.NUMBER},
     {name: "networkShape", type: Type.ARRAY_NUMBER},
     {name: "seed", type: Type.STRING},
+    {name: "datasetSequenceMode", type: Type.STRING},
     {name: "instructionsCollapsed", type: Type.BOOLEAN},
     {name: "aiSafetyCollapsed", type: Type.BOOLEAN},
     {name: "featuresCollapsed", type: Type.BOOLEAN},
@@ -101,6 +102,7 @@ export class State {
   learningRate = 0.3;
   networkShape: number[] = [2];
   seed: string;
+  datasetSequenceMode = "flat-on-left";
   cooldownActiveUntilIter = 0;
   instructionsCollapsed = true;
   aiSafetyCollapsed = true;

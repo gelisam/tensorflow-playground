@@ -78,7 +78,7 @@ Introduce the concept to the codebase using the trivial sequence which simply go
 
 ## [x] Don't animate the play button on click when it is greyed out
 
-## [ ] Dataset sequence dropdown
+## [x] Dataset sequence dropdown
 
 Add a dropdown to the top-right, like in https://gelisam.com/sandbagging
 
