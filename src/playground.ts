@@ -15,7 +15,6 @@ limitations under the License.
 
 import * as nn from "./nn";
 import { Activations } from "./activation";
-import {HeatMap, reduceMatrix} from "./heatmap";
 import {
   State,
   datasets,
@@ -41,7 +40,12 @@ function formatNumber(num: number): string {
 
 const RECT_SIZE = 30;
 const BIAS_SIZE = 5;
-const DENSITY = 100;
+
+/** The flag values used in the dataset's grid, each drawn in its own color. */
+const FLAG_VALUES = [-1, -0.5, 0, 0.5, 1];
+const FLAG_COLORS = ["#e41a1c", "#ff7f00", "#4daf4a", "#377eb8", "#984ea3"];
+/** Step size (in payload units) used when sampling the payload/output charts. */
+const CHART_STEP = 0.05;
 
 enum HoverType {
   BIAS, WEIGHT
@@ -126,13 +130,11 @@ state.getHiddenProps().forEach(prop => {
   }
 });
 
-let boundary: {[id: string]: number[][]} = {};
 let selectedNodeId: string = null;
-// Plot the heatmap.
+/** Maps each node/input id to a function computing its value for a given (flag, payload). */
+let nodeGetValue: {[id: string]: (flag: number, payload: number) => number} = {};
+// Domain used both for the flag/payload input space and the charted output range.
 let xDomain: [number, number] = [-2, 2];
-let heatMap =
-    new HeatMap(600, DENSITY, xDomain, xDomain, d3.select("#heatmap"),
-        {showAxes: false});
 let linkWidthScale = d3.scale.linear()
   .domain([0, 5])
   .range([1, 10])
@@ -388,11 +390,22 @@ function drawNode(cx: number, cy: number, nodeId: string, isInput: boolean,
       });
   }
 
+  // Compute this node's value as a function of (flag, payload). For hidden
+  // and output nodes this runs a forward pass; for input nodes it just reads
+  // off the corresponding input feature.
+  let getValue = node != null ?
+      (flag: number, payload: number) => {
+        nn.forwardProp(network, constructInput(flag, payload));
+        return node.output;
+      } :
+      (flag: number, payload: number) => INPUTS[nodeId].f(flag, payload);
+  nodeGetValue[nodeId] = getValue;
+
   if (!showCanvas) {
     return nodeGroup;
   }
 
-  // Draw the node's canvas.
+  // Draw the node's mini payload/output chart.
   let div = d3.select("#network").insert("div", ":first-child")
     .attr({
       "id": `canvas-${nodeId}`,
@@ -407,22 +420,22 @@ function drawNode(cx: number, cy: number, nodeId: string, isInput: boolean,
       selectedNodeId = nodeId;
       div.classed("hovered", true);
       nodeGroup.classed("hovered", true);
-      updateDecisionBoundary(network, false);
-      heatMap.updateBackground(boundary[nodeId]);
+      drawPayloadOutputChart();
     })
     .on("mouseleave", function() {
       selectedNodeId = null;
       div.classed("hovered", false);
       nodeGroup.classed("hovered", false);
-      updateDecisionBoundary(network, false);
-      heatMap.updateBackground(boundary[nn.getOutputNode(network).id]);
+      drawPayloadOutputChart();
     });
   if (isInput) {
     div.classed("active", true);
   }
-  let nodeHeatMap = new HeatMap(RECT_SIZE, DENSITY / 10, xDomain,
-      xDomain, div, {noSvg: true});
-  div.datum({heatmap: nodeHeatMap, id: nodeId});
+  let chartSvg = div.append("svg")
+      .attr("width", RECT_SIZE)
+      .attr("height", RECT_SIZE);
+  div.datum({id: nodeId, chartSvg});
+  drawMiniChart(chartSvg, getValue);
   return nodeGroup;
 }
 
@@ -443,6 +456,7 @@ function drawNetwork(network: nn.Node[][]): void {
 
   // Map of all node coordinates.
   let node2coord: {[id: string]: {cx: number, cy: number}} = {};
+  nodeGetValue = {};
   let container = svg.append("g")
     .classed("core", true)
     .attr("transform", `translate(${padding},${padding})`);
@@ -689,56 +703,6 @@ function drawLink(
   return line;
 }
 
-/**
- * Given a neural network, it asks the network for the output (prediction)
- * of every node in the network using inputs sampled on a square grid.
- * It returns a map where each key is the node ID and the value is a square
- * matrix of the outputs of the network for each input in the grid respectively.
- */
-function updateDecisionBoundary(network: nn.Node[][], firstTime: boolean) {
-  if (firstTime) {
-    boundary = {};
-    nn.forEachNode(network, true, node => {
-      boundary[node.id] = new Array(DENSITY);
-    });
-    // Go through all predefined inputs.
-    for (let nodeId in INPUTS) {
-      boundary[nodeId] = new Array(DENSITY);
-    }
-  }
-  let xScale = d3.scale.linear().domain([0, DENSITY - 1]).range(xDomain);
-  let yScale = d3.scale.linear().domain([DENSITY - 1, 0]).range(xDomain);
-
-  let i = 0, j = 0;
-  for (i = 0; i < DENSITY; i++) {
-    if (firstTime) {
-      nn.forEachNode(network, true, node => {
-        boundary[node.id][i] = new Array(DENSITY);
-      });
-      // Go through all predefined inputs.
-      for (let nodeId in INPUTS) {
-        boundary[nodeId][i] = new Array(DENSITY);
-      }
-    }
-    for (j = 0; j < DENSITY; j++) {
-      // 1 for points inside the circle, and 0 for points outside the circle.
-      let x = xScale(i);
-      let y = yScale(j);
-      let input = constructInput(x, y);
-      nn.forwardProp(network, input);
-      nn.forEachNode(network, true, node => {
-        boundary[node.id][i][j] = node.output;
-      });
-      if (firstTime) {
-        // Go through all predefined inputs.
-        for (let nodeId in INPUTS) {
-          boundary[nodeId][i][j] = INPUTS[nodeId].f(x, y);
-        }
-      }
-    }
-  }
-}
-
 function getLoss(network: nn.Node[][], dataPoints: Example2D[]): number {
   let loss = 0;
   for (let i = 0; i < dataPoints.length; i++) {
@@ -750,41 +714,17 @@ function getLoss(network: nn.Node[][], dataPoints: Example2D[]): number {
   return loss / dataPoints.length;
 }
 
-function updateUI(firstStep = false) {
+function updateUI() {
   // Update the links visually.
   updateWeightsUI(network, d3.select("g.core"));
   // Update the bias values visually.
   updateBiasesUI(network);
-  // Get the decision boundary of the network.
-  updateDecisionBoundary(network, firstStep);
-  let selectedId = selectedNodeId != null ?
-      selectedNodeId : nn.getOutputNode(network).id;
-  heatMap.updateBackground(boundary[selectedId]);
 
-  // Create network wrapper with predict function for highlighting incorrect predictions
-  let networkWrapper = {
-    predict: (point: Example2D) => {
-      let input = constructInput(point.x, point.y);
-      let outputNode = nn.forwardProp(network, input);
-      return outputNode.output >= 0 ? 1 : -1; // Convert continuous output to classification
-    }
-  };
-
-  // Update all decision boundaries.
+  // Redraw each node's mini payload/output chart.
   d3.select("#network").selectAll("div.canvas")
-      .each(function(data: {heatmap: HeatMap, id: string}) {
-    data.heatmap.updateBackground(reduceMatrix(boundary[data.id], 10));
+      .each(function(data: {id: string, chartSvg: any}) {
+    drawMiniChart(data.chartSvg, nodeGetValue[data.id]);
   });
-
-  // Update heatmap points with incorrect prediction highlighting
-  heatMap.updatePoints(trainData, networkWrapper);
-  heatMap.updateTestPoints(testData, networkWrapper);
-
-  // Draw the top row highlight
-  let allVisiblePoints = trainData.slice();
-  allVisiblePoints = allVisiblePoints.concat(testData);
-  // The networkWrapper created earlier in updateUI has the .predict method
-  heatMap.drawTopRowHighlight(allVisiblePoints, networkWrapper);
 
   function zeroPad(n: number): string {
     let pad = "000000";
@@ -801,7 +741,6 @@ function updateUI(firstStep = false) {
 
   // Update loss and iteration number.
   d3.select("#loss-train").text(humanReadable(lossTrain));
-  // d3.select("#loss-test").text(humanReadable(lossTest)); // Removed
   d3.select("#iter-number").text(addCommas(zeroPad(iter)));
   drawPayloadOutputChart();
   drawLossLandscape();
@@ -928,7 +867,7 @@ function reset(onStartup=false, hardcodeWeightsOption?:boolean) { // hardcodeWei
   lossTest = getLoss(network, testData);
   updateLearningRate(lossTrain);
   drawNetwork(network);
-  updateUI(true);
+  updateUI();
   updateSeedDisplay(); // Ensure seed display is current
 }
 
@@ -950,7 +889,7 @@ function generateData() {
  * Assumes Math.random has already been seeded.
  */
 function generateDataPointsOnly() {
-  const values = [-1, -0.5, 0, 0.5, 1];
+  const values = FLAG_VALUES;
   const data: Example2D[] = [];
   for (let i = 0; i < values.length; i++) {
     for (let j = 0; j < values.length; j++) {
@@ -961,8 +900,6 @@ function generateDataPointsOnly() {
   }
   trainData = data;
   testData = data;
-  heatMap.updatePoints(trainData);
-  heatMap.updateTestPoints(testData);
 }
 
 let firstInteraction = true;
@@ -1134,19 +1071,71 @@ function drawLossLandscape() {
   });
 }
 
+/**
+ * Computes, for each of the dataset's flag values, the sequence of
+ * (payload, value) points obtained by scanning payload across the chart's
+ * domain. `getValue` typically runs a forward pass of the network.
+ */
+function computeFlagCurves(
+    getValue: (flag: number, payload: number) => number
+): {x: number, y: number}[][] {
+  return FLAG_VALUES.map(flag => {
+    const points: {x: number, y: number}[] = [];
+    for (let payload = xDomain[0]; payload <= xDomain[1] + 1e-9; payload += CHART_STEP) {
+      points.push({x: payload, y: getValue(flag, payload)});
+    }
+    return points;
+  });
+}
+
+/**
+ * Draws the dashed "output = payload" target line, plus one colored line
+ * per flag value, into the given svg using the given scales.
+ */
+function drawFlagCurves(svg, xScale, yScale,
+    getValue: (flag: number, payload: number) => number, strokeWidth: number) {
+  const line = d3.svg.line<{x: number, y: number}>()
+    .x(d => xScale(d.x))
+    .y(d => yScale(d.y));
+
+  svg.append("path")
+    .datum([{x: xDomain[0], y: xDomain[0]}, {x: xDomain[1], y: xDomain[1]}])
+    .attr("d", line)
+    .attr("fill", "none")
+    .attr("stroke", "#d0d0d0")
+    .attr("stroke-dasharray", "4,4");
+
+  computeFlagCurves(getValue).forEach((points, i) => {
+    svg.append("path")
+      .datum(points)
+      .attr("d", line)
+      .attr("fill", "none")
+      .attr("stroke", FLAG_COLORS[i])
+      .attr("stroke-width", strokeWidth);
+  });
+}
+
+/** Draws a small, axis-less version of the payload/output chart. */
+function drawMiniChart(svg, getValue: (flag: number, payload: number) => number) {
+  svg.selectAll("*").remove();
+  const xScale = d3.scale.linear().domain(xDomain).range([0, RECT_SIZE]);
+  const yScale = d3.scale.linear().domain(xDomain).range([RECT_SIZE, 0]);
+  drawFlagCurves(svg, xScale, yScale, getValue, 1);
+}
+
 function drawPayloadOutputChart() {
   const container = d3.select("#payload-output-chart");
   container.selectAll("*").remove();
 
-  const width = 240;
-  const height = 160;
-  const margin = {top: 12, right: 12, bottom: 24, left: 28};
+  const width = 560;
+  const height = 320;
+  const margin = {top: 12, right: 16, bottom: 32, left: 40};
   const svg = container.append("svg")
     .attr("width", width)
     .attr("height", height);
 
-  const xScale = d3.scale.linear().domain([-2, 2]).range([margin.left, width - margin.right]);
-  const yScale = d3.scale.linear().domain([-2, 2]).range([height - margin.bottom, margin.top]);
+  const xScale = d3.scale.linear().domain(xDomain).range([margin.left, width - margin.right]);
+  const yScale = d3.scale.linear().domain(xDomain).range([height - margin.bottom, margin.top]);
 
   svg.append("g")
     .attr("class", "x axis")
@@ -1158,48 +1147,34 @@ function drawPayloadOutputChart() {
     .attr("transform", `translate(${margin.left},0)`)
     .call(d3.svg.axis().scale(yScale).orient("left").tickValues([-2, -1, 0, 1, 2]));
 
-  const reference = [{x: -2, y: -2}, {x: 2, y: 2}];
-  const refLine = d3.svg.line<any>()
-    .x(d => xScale(d.x))
-    .y(d => yScale(d.y));
-
-  svg.append("path")
-    .datum(reference)
-    .attr("d", refLine)
-    .attr("fill", "none")
-    .attr("stroke", "#d0d0d0")
-    .attr("stroke-dasharray", "4,4");
-
-  const samples: {x: number, y: number}[] = [];
-  for (let payload = -2; payload <= 2; payload += 0.05) {
-    const input = [0, payload];
-    const outputNode = nn.forwardProp(network, input);
-    samples.push({x: payload, y: outputNode.output});
-  }
-
-  const line = d3.svg.line<any>()
-    .x(d => xScale(d.x))
-    .y(d => yScale(d.y));
-
-  svg.append("path")
-    .datum(samples)
-    .attr("d", line)
-    .attr("fill", "none")
-    .attr("stroke", "#0877bd")
-    .attr("stroke-width", 2);
+  const selectedId = selectedNodeId != null ? selectedNodeId : nn.getOutputNode(network).id;
+  drawFlagCurves(svg, xScale, yScale, nodeGetValue[selectedId], 2);
 
   svg.append("text")
     .attr("x", width / 2)
     .attr("y", height - 4)
     .attr("text-anchor", "middle")
-    .style("font-size", "10px")
+    .style("font-size", "11px")
     .text("payload");
 
   svg.append("text")
     .attr("transform", "rotate(-90)")
     .attr("x", -height / 2)
-    .attr("y", 12)
+    .attr("y", 14)
     .attr("text-anchor", "middle")
-    .style("font-size", "10px")
+    .style("font-size", "11px")
     .text("output");
+
+  const legend = container.append("div").style({
+    display: "flex",
+    "justify-content": "center",
+    gap: "14px",
+    "margin-top": "-4px"
+  });
+  FLAG_VALUES.forEach((flag, i) => {
+    legend.append("span")
+      .style("font-size", "11px")
+      .style("color", FLAG_COLORS[i])
+      .text(`flag=${flag}`);
+  });
 }

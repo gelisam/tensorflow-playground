@@ -64,7 +64,7 @@ Clicking on it toggles the triangle but doesn't fold the contents of the panel.
 
 They are extremely thick right now. They should be 1px or 2px max.
 
-## [ ] Move the payload/output graph to OUTPUT
+## [x] Move the payload/output graph to OUTPUT
 
 Ditch the heatmap visualization. Instead, draw the `output = f(payload)` graph, but draw several lines, one for each of the 5 different values for `flag` in the dataset's grid. Use a different color for each line. Use this same visualization instead of a heatmap in the WEIGHTS section, including when hovering over a node. Keep the dashed line for the target function `output = payload`.
 

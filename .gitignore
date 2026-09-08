@@ -1,3 +1,7 @@
 node_modules/
 dist/
 .playwright-mcp/
+initial.png
+weights-expanded.png
+weights2.png
+weights3.png

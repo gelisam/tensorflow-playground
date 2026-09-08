@@ -510,28 +510,6 @@ g.column rect {
   stroke: none;
 }
 
-#heatmap {
-  position: relative;
-  float: none;
-}
-
-#heatmap .tick line {
-  stroke: #ddd;
-}
-
-#heatmap .tick text {
-  fill: #bbb;
-  dominant-baseline: auto;
-}
-
-#heatmap .tick:nth-child(7) text {
-  fill: #333;
-}
-
-#heatmap .tick:nth-child(7) line {
-  stroke: #999;
-}
-
 /* Data column */
 
 .vcenter {
@@ -792,27 +770,28 @@ g.column rect {
   opacity: 0;
 }
 
-#network .canvas canvas {
+#network .canvas svg {
   position: absolute;
   top: -2px;
   left: -2px;
+  background-color: #fff;
   border: 2px solid black;
   border-radius: 3px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
-#network .canvas.inactive canvas {
+#network .canvas.inactive svg {
   box-shadow: inherit;
 }
 
-#network .canvas.inactive canvas {
+#network .canvas.inactive svg {
   opacity: 0.4;
   border: 0;
   top: 0;
   left: 0;
 }
 
-#network .canvas.hovered canvas {
+#network .canvas.hovered svg {
   opacity: 1.0;
   border: 2px solid #666;
   top: -2px;
@@ -870,6 +849,28 @@ g.column rect {
   width: 600px;
 }
 
+.output.column #payload-output-chart {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  clear: both;
+  padding-top: 10px;
+  padding-bottom: 4px;
+}
+
+.output.column #payload-output-chart svg {
+  display: block;
+  margin: 0 auto;
+}
+
+.output.column .axis path {
+  display: inline;
+  fill: none;
+  stroke: #777;
+  stroke-width: 1px;
+  shape-rendering: crispEdges;
+}
 
 .metrics {
   position: relative;
@@ -1288,17 +1289,9 @@ footer .logo {
   gap: 24px 20px;
 }
 
-.landscape.column #loss-landscape svg,
-.landscape.column #payload-output-chart svg {
+.landscape.column #loss-landscape svg {
   display: block;
   margin: 0 auto;
-}
-
-.landscape.column #payload-output-chart {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding-bottom: 4px;
 }
 
 .landscape.column .axis path {
