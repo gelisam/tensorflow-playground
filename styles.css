@@ -1300,3 +1300,11 @@ footer .logo {
   justify-content: center;
   padding-bottom: 4px;
 }
+
+.landscape.column .axis path {
+  display: inline;
+  fill: none;
+  stroke: #777;
+  stroke-width: 1px;
+  shape-rendering: crispEdges;
+}
