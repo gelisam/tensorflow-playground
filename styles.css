@@ -1033,6 +1033,16 @@ footer .logo {
     background: #183D4E;
 }
 
+/* Keep the greyed-out disabled look even on hover/focus, overriding both the
+   colored-button rule above and MDL's own disabled/hover rules (uses an ID
+   selector so it wins regardless of source order). */
+#play-pause-button[disabled],
+#play-pause-button[disabled]:hover,
+#play-pause-button[disabled]:active,
+#play-pause-button[disabled]:focus {
+    background: rgba(0, 0, 0, 0.12);
+}
+
 /* Checkbox */
 
 .mdl-checkbox__box-outline {

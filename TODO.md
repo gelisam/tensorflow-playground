@@ -74,7 +74,7 @@ Instead of picking a single dataset at the beginning of training and training on
 
 Introduce the concept to the codebase using the trivial sequence which simply goes through all the elements of the grid several times. Make sure the training stops when we run out of elements, and that it is possible to pause and resume the training. Toggle back the play button automatically when we run out of elements and grey it out.
 
-## [ ] Don't highlight the play button on hover when it is greyed out
+## [x] Don't highlight the play button on hover when it is greyed out
 
 ## [ ] Dataset sequence dropdown
 
