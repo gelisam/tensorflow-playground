@@ -146,6 +146,12 @@ let colorScale = d3.scale.linear<string, number>()
 let iter = 0;
 let trainData: Example2D[] = [];
 let testData: Example2D[] = [];
+/** Number of times the trivial dataset sequence repeats the full grid before training stops automatically. */
+const SEQUENCE_REPEATS = 200;
+/** The predetermined list of training examples, consumed one epoch's worth at a time as training progresses. */
+let datasetSequence: Example2D[] = [];
+/** Index into datasetSequence of the next epoch to train on. */
+let sequenceIndex = 0;
 let network: nn.Node[][] = null;
 let lossTrain = 0;
 let lossTest = 0;
@@ -210,6 +216,8 @@ function makeGUI() {
   player.onPlayPause(isPlaying => {
     d3.select("#play-pause-button").classed("playing", isPlaying);
   });
+
+  setPlayButtonEnabled(true);
 
   d3.select("#next-step-button").on("click", () => {
     player.pause();
@@ -778,12 +786,20 @@ function updateLearningRate(loss: number) {
 }
 
 function oneStep(): void {
+  if (sequenceIndex >= datasetSequence.length) {
+    // The dataset sequence has run out of elements; there's nothing left to train on.
+    return;
+  }
+
+  // Consume one epoch's worth of elements from the dataset sequence.
+  let epoch = datasetSequence.slice(sequenceIndex, sequenceIndex + trainData.length);
+  sequenceIndex += epoch.length;
+
   iter++;
-  shuffle(trainData);
   // The training is done in batches of 10.
   let batchSize = 10;
-  for (let i = 0; i < trainData.length / batchSize; i++) {
-    let batch = trainData.slice(i * batchSize, (i + 1) * batchSize);
+  for (let i = 0; i < epoch.length / batchSize; i++) {
+    let batch = epoch.slice(i * batchSize, (i + 1) * batchSize);
     batch.forEach(point => {
       let input = constructInput(point.x, point.y);
       nn.forwardProp(network, input);
@@ -800,6 +816,33 @@ function oneStep(): void {
   updateLearningRate(lossTrain);
 
   updateUI();
+
+  if (sequenceIndex >= datasetSequence.length) {
+    // Ran out of elements: stop training, toggle the play button back off, and grey it out.
+    player.pause();
+    setPlayButtonEnabled(false);
+  }
+}
+
+/**
+ * Builds the trivial dataset sequence: the full grid, shuffled and repeated
+ * SEQUENCE_REPEATS times, then rewinds the sequence index back to the start.
+ */
+function generateDatasetSequence() {
+  datasetSequence = [];
+  for (let repeat = 0; repeat < SEQUENCE_REPEATS; repeat++) {
+    let epoch = trainData.slice();
+    shuffle(epoch);
+    datasetSequence.push(...epoch);
+  }
+  sequenceIndex = 0;
+  setPlayButtonEnabled(true);
+}
+
+/** Enables/disables (and visually greys out) the play button. */
+function setPlayButtonEnabled(enabled: boolean) {
+  d3.select("#play-pause-button")
+    .attr("disabled", enabled ? null : true);
 }
 
 export function getOutputWeights(network: nn.Node[][]): number[] {
@@ -830,6 +873,8 @@ function reset(onStartup=false, hardcodeWeightsOption?:boolean) { // hardcodeWei
   updateLearningRateDisplay(state.learningRate, false);
   recentTrainLosses = []; // Also clear recent losses on reset
 
+  // Rebuild the dataset sequence and rewind to its start, re-enabling the play button.
+  generateDatasetSequence();
 
   // Determine if weights should be hardcoded
   // Priority:

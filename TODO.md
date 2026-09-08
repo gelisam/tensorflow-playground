@@ -68,7 +68,7 @@ They are extremely thick right now. They should be 1px or 2px max.
 
 Ditch the heatmap visualization. Instead, draw the `output = f(payload)` graph, but draw several lines, one for each of the 5 different values for `flag` in the dataset's grid. Use a different color for each line. Use this same visualization instead of a heatmap in the WEIGHTS section, including when hovering over a node. Keep the dashed line for the target function `output = payload`.
 
-## [ ] Dataset sequences
+## [x] Dataset sequences
 
 Instead of picking a single dataset at the beginning of training and training on random elements of that dataset until the user pauses, a "dataset sequence" will specify a list of elements. When pressing play, we train on each element in sequence, and we stop automatically once we run out of elements.
 
