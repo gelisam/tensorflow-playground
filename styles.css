@@ -1035,12 +1035,15 @@ footer .logo {
 
 /* Keep the greyed-out disabled look even on hover/focus, overriding both the
    colored-button rule above and MDL's own disabled/hover rules (uses an ID
-   selector so it wins regardless of source order). */
+   selector so it wins regardless of source order). Also freeze box-shadow
+   and disable transitions so clicking it doesn't produce a "press" animation. */
 #play-pause-button[disabled],
 #play-pause-button[disabled]:hover,
 #play-pause-button[disabled]:active,
 #play-pause-button[disabled]:focus {
     background: rgba(0, 0, 0, 0.12);
+    box-shadow: 0 1px 1.5px 0 rgba(0, 0, 0, 0.12), 0 1px 1px 0 rgba(0, 0, 0, 0.24);
+    transition: none;
 }
 
 /* Checkbox */
